@@ -303,6 +303,11 @@ class UnifiedCamera {
     return true;
   }
 
+  inline bool inBound(const Vec2& proj) const{
+    // TODO
+    return true;
+  }
+
   /// @brief Set parameters from initialization
   ///
   /// Initializes the camera model to  \f$ \left[f_x, f_y, c_x, c_y, 0.5,

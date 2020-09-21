@@ -362,6 +362,28 @@ class DoubleSphereCamera {
     return true;
   }
 
+  inline bool inBound(const Vec2& proj) const{
+
+    const Scalar& fx = param[0];
+    const Scalar& fy = param[1];
+    const Scalar& cx = param[2];
+    const Scalar& cy = param[3];
+
+    const Scalar& alpha = param[5];
+
+    const Scalar mx = (proj[0] - cx) / fx;
+    const Scalar my = (proj[1] - cy) / fy;
+
+    const Scalar r2 = mx * mx + my * my;
+
+    if (alpha > Scalar(0.5)) {
+      // hm: the bigger the apparent alpha > 0.5, the smaller the acceptable region of r^2
+      if (r2 >= Scalar(1) / (Scalar(2) * (alpha + alpha_offset) - Scalar(1))) return false;
+    }
+
+    return true;
+  }
+
   /// @brief Set parameters from initialization
   ///
   /// Initializes the camera model to  \f$ \left[f_x, f_y, c_x, c_y, 0, 0.5
