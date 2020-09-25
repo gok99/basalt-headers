@@ -101,9 +101,10 @@ void test_project_unproject() {
     for (int x = -10; x <= 10; x++) {
       for (int y = -10; y <= 10; y++) {
         for (int z = 0; z <= 5; z++) {
-          Vec4 p(x, y, z, 0);
+          Vec4 p(x, y, z, 0.23424);
 
-          Vec4 p_normalized = p.normalized();
+          Vec4 p_normalized = Vec4::Zero();
+          p_normalized.template head<3>() = p.template head<3>().normalized();
           Vec2 res;
           bool success = cam.project(p, res);
 
@@ -152,7 +153,7 @@ void test_unproject_jacobians() {
             test_jacobian(
                 "d_r_d_p", Jp,
                 [&](const Vec2 &x) {
-                  Vec4 res;
+                  Vec4 res = Vec4::Zero();
                   cam.unproject(p + x, res);
                   return res;
                 },
@@ -161,7 +162,7 @@ void test_unproject_jacobians() {
             test_jacobian(
                 "d_r_d_param", Jparam,
                 [&](const VecN &x) {
-                  Vec4 res;
+                  Vec4 res = Vec4::Zero();
                   CamT cam1 = cam;
                   cam1 += x;
 
@@ -311,7 +312,7 @@ void test_stereographic_project_jacobian() {
 
   for (int x = -10; x <= 10; x++) {
     for (int y = -10; y <= 10; y++) {
-      Vec4 p(x, y, 5, 0);
+      Vec4 p(x, y, 5, 0.23424);
 
       Mat24 Jp;
 
@@ -335,9 +336,10 @@ void test_stereographic_project_unproject() {
 
   for (int x = -10; x <= 10; x++) {
     for (int y = -10; y <= 10; y++) {
-      Vec4 p(x, y, 5, 0);
+      Vec4 p(x, y, 5, 0.23424);
 
-      Vec4 p_normalized = p.normalized();
+      Vec4 p_normalized = Vec4::Zero();
+      p_normalized.template head<3>() = p.template head<3>().normalized();
       Vec2 res = CamT::project(p);
       Vec4 p_uproj = CamT::unproject(res);
 
@@ -357,7 +359,7 @@ void test_stereographic_unproject_jacobian() {
 
   for (int x = -10; x <= 10; x++) {
     for (int y = -10; y <= 10; y++) {
-      Vec4 p_3d(x, y, 5, 0);
+      Vec4 p_3d(x, y, 5, 0.23424);
 
       Vec2 p = CamT::project(p_3d);
 

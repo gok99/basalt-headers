@@ -324,6 +324,7 @@ class FovCamera {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   inline bool inBound(const Vec2& proj) const{
     // TODO
@@ -332,6 +333,13 @@ class FovCamera {
   }
 
 >>>>>>> 1399aa5... fix unused variable warnings
+=======
+  inline bool inBound(const Vec2& proj) const{
+    // TODO
+    return true;
+  }
+
+>>>>>>> 8582da8c4567dbbcdf313c3dec70a3e03d3e4589
   /// @brief Set parameters from initialization
   ///
   /// Initializes the camera model to  \f$ \left[f_x, f_y, c_x, c_y, 1

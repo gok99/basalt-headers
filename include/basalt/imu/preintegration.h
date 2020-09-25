@@ -158,6 +158,7 @@ class IntegratedImuMeasurement {
   void integrate(const ImuData& data, const Vec3& accel_cov,
                  const Vec3& gyro_cov) {
     ImuData data_corrected = data;
+    // hm: TODO assert warning if the time gap is too large
     data_corrected.t_ns -= start_t_ns;
     data_corrected.accel -= bias_accel_lin;
     data_corrected.gyro -= bias_gyro_lin;

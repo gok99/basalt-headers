@@ -54,6 +54,7 @@ template <typename Scalar = double>
 class DoubleSphereCamera {
  public:
   static constexpr int N = 6;  ///< Number of intrinsic parameters.
+  static constexpr Scalar alpha_offset = 0.05; // hm: to shrink the effective viewing angle of the lens
 
   using Vec2 = Eigen::Matrix<Scalar, 2, 1>;
   using Vec4 = Eigen::Matrix<Scalar, 4, 1>;
@@ -259,7 +260,8 @@ class DoubleSphereCamera {
     const Scalar r2 = mx * mx + my * my;
 
     if (alpha > Scalar(0.5)) {
-      if (r2 >= Scalar(1) / (Scalar(2) * alpha - Scalar(1))) return false;
+      // hm: the bigger the apparent alpha > 0.5, the smaller the acceptable region of r^2
+      if (r2 >= Scalar(1) / (Scalar(2) * (alpha + alpha_offset) - Scalar(1))) return false;
     }
 
     const Scalar xi2_2 = alpha * alpha;
@@ -355,6 +357,28 @@ class DoubleSphereCamera {
         (*d_p3d_d_param)(2, 5) = mz * d_k_d_xi2 + k * d_mz_d_xi2;
         (*d_p3d_d_param)(3, 5) = Scalar(0);
       }
+    }
+
+    return true;
+  }
+
+  inline bool inBound(const Vec2& proj) const{
+
+    const Scalar& fx = param[0];
+    const Scalar& fy = param[1];
+    const Scalar& cx = param[2];
+    const Scalar& cy = param[3];
+
+    const Scalar& alpha = param[5];
+
+    const Scalar mx = (proj[0] - cx) / fx;
+    const Scalar my = (proj[1] - cy) / fy;
+
+    const Scalar r2 = mx * mx + my * my;
+
+    if (alpha > Scalar(0.5)) {
+      // hm: the bigger the apparent alpha > 0.5, the smaller the acceptable region of r^2
+      if (r2 >= Scalar(1) / (Scalar(2) * (alpha + alpha_offset) - Scalar(1))) return false;
     }
 
     return true;
