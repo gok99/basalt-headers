@@ -245,6 +245,15 @@ class KannalaBrandtCamera4 {
     return true;
   }
 
+<<<<<<< HEAD
+=======
+inline bool inBound(const Vec2& proj) const{
+  // TODO
+  if (proj[0] < 0 || proj[1] <  0) return false;
+  return true;
+}
+
+>>>>>>> 1399aa5... fix unused variable warnings
   /// @brief solve for theta using Newton's method.
   ///
   /// Find root of the polynomisl \f$ d(\theta) - r_{\theta} = 0 \f$ using
