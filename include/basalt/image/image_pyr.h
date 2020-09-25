@@ -179,6 +179,14 @@ class ManagedImagePyr {
     return Eigen::Matrix<S, 2, 1>(x, y);
   }
 
+  void setCamId(size_t cam_id){
+  this->cam_id = cam_id;
+  }
+
+  size_t getCamId() const{
+    return cam_id;
+  }
+
  protected:
   /// @brief Return image of the certain level
   ///
@@ -192,7 +200,7 @@ class ManagedImagePyr {
 
     return image.SubImage(x, y, width, height);
   }
-
+  size_t cam_id;
   size_t orig_w;          ///< Width of the original image (level 0)
   ManagedImage<T> image;  ///< Pyramid image stored as a mipmap
 };
