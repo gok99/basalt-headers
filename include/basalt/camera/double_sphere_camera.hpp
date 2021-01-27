@@ -54,7 +54,7 @@ template <typename Scalar = double>
 class DoubleSphereCamera {
  public:
   static constexpr int N = 6;  ///< Number of intrinsic parameters.
-  static constexpr Scalar alpha_offset = 0.05; // hm: to shrink the effective viewing angle of the lens
+  static constexpr Scalar alpha_offset = 0.09; // hm: to shrink the effective viewing angle of the lens, larger the greater the shrink
 
   using Vec2 = Eigen::Matrix<Scalar, 2, 1>;
   using Vec4 = Eigen::Matrix<Scalar, 4, 1>;

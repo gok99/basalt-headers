@@ -84,7 +84,12 @@ struct PoseState {
   /// @param[in,out] T the pose to update
   inline static void incPose(const Sophus::Vector6d& inc, Sophus::SE3d& T) {
     T.translation() += inc.head<3>();
-    T.so3() = Sophus::SO3d::exp(inc.tail<3>()) * T.so3();
+    try{
+      T.so3() = Sophus::SO3d::exp(inc.tail<3>()) * T.so3();
+    }catch(const std::exception& e){
+      throw std::runtime_error("incPose() runtime error");
+    }
+    
   }
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
