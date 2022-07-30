@@ -1,4 +1,4 @@
-/**
+﻿/**
 BSD 3-Clause License
 
 This file is part of the Basalt project.
@@ -38,9 +38,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <basalt/camera/camera_static_assert.hpp>
+
 #include <basalt/utils/sophus_utils.hpp>
 
 namespace basalt {
+
+using std::sqrt;
 
 /// @brief Field-of-View camera model
 ///
@@ -48,9 +52,10 @@ namespace basalt {
 /// This model has N=5 parameters \f$ \mathbf{i} = \left[f_x, f_y, c_x, c_y,
 /// w \right]^T \f$. See \ref project and \ref unproject
 /// functions for more details.
-template <typename Scalar = double>
+template <typename Scalar_ = double>
 class FovCamera {
  public:
+  using Scalar = Scalar_;
   static constexpr int N = 5;  ///< Number of intrinsic parameters.
 
   using Vec2 = Eigen::Matrix<Scalar, 2, 1>;
@@ -67,23 +72,23 @@ class FovCamera {
   using Mat44 = Eigen::Matrix<Scalar, 4, 4>;
 
   /// @brief Default constructor with zero intrinsics
-  FovCamera() { param.setZero(); }
+  FovCamera() { param_.setZero(); }
 
   /// @brief Construct camera model with given vector of intrinsics
   ///
   /// @param[in] p vector of intrinsic parameters [fx, fy, cx, cy, w]
-  explicit FovCamera(const VecN& p) { param = p; }
+  explicit FovCamera(const VecN& p) { param_ = p; }
 
   /// @brief Cast to different scalar type
   template <class Scalar2>
   FovCamera<Scalar2> cast() const {
-    return FovCamera<Scalar2>(param.template cast<Scalar2>());
+    return FovCamera<Scalar2>(param_.template cast<Scalar2>());
   }
 
   /// @brief Camera model name
   ///
   /// @return "fov"
-  static const std::string getName() { return "fov"; }
+  static std::string getName() { return "fov"; }
 
   /// @brief Project the point and optionally compute Jacobians
   ///
@@ -110,17 +115,27 @@ class FovCamera {
   /// @param[out] d_proj_d_param point if not nullptr computed Jacobian of
   /// projection with respect to intrinsic parameters
   /// @return if projection is valid
-  inline bool project(const Vec4& p, Vec2& res, Mat24* d_r_d_p = nullptr,
-                      Mat2N* d_r_d_param = nullptr) const {
-    const Scalar& fx = param[0];
-    const Scalar& fy = param[1];
-    const Scalar& cx = param[2];
-    const Scalar& cy = param[3];
-    const Scalar& w = param[4];
+  template <class DerivedPoint3D, class DerivedPoint2D,
+            class DerivedJ3D = std::nullptr_t,
+            class DerivedJparam = std::nullptr_t>
+  inline bool project(const Eigen::MatrixBase<DerivedPoint3D>& p3d,
+                      Eigen::MatrixBase<DerivedPoint2D>& proj,
+                      DerivedJ3D d_proj_d_p3d = nullptr,
+                      DerivedJparam d_proj_d_param = nullptr) const {
+    checkProjectionDerivedTypes<DerivedPoint3D, DerivedPoint2D, DerivedJ3D,
+                                DerivedJparam, N>();
 
-    const Scalar& x = p[0];
-    const Scalar& y = p[1];
-    const Scalar& z = p[2];
+    const typename EvalOrReference<DerivedPoint3D>::Type p3d_eval(p3d);
+
+    const Scalar& fx = param_[0];
+    const Scalar& fy = param_[1];
+    const Scalar& cx = param_[2];
+    const Scalar& cy = param_[3];
+    const Scalar& w = param_[4];
+
+    const Scalar& x = p3d_eval[0];
+    const Scalar& y = p3d_eval[1];
+    const Scalar& z = p3d_eval[2];
 
     Scalar r2 = x * x + y * y;
     Scalar r = sqrt(r2);
@@ -141,9 +156,12 @@ class FovCamera {
     Scalar tmp = (z2 + Scalar(4) * tanwhalf * tanwhalf * r2);
     Scalar d_atan_wrd_d_w = Scalar(2) * r * d_tanwhalf_d_w * z / tmp;
 
+    bool is_valid = true;
     if (w > Sophus::Constants<Scalar>::epsilonSqrt()) {
       if (r2 < Sophus::Constants<Scalar>::epsilonSqrt()) {
-        if (z < Sophus::Constants<Scalar>::epsilonSqrt()) return false;
+        if (z < Sophus::Constants<Scalar>::epsilonSqrt()) {
+          is_valid = false;
+        }
 
         rd = Scalar(2) * tanwhalf / w;
         d_rd_d_w = Scalar(2) * (d_tanwhalf_d_w * w - tanwhalf) / (w * w);
@@ -167,32 +185,43 @@ class FovCamera {
     const Scalar mx = x * rd;
     const Scalar my = y * rd;
 
-    res[0] = fx * mx + cx;
-    res[1] = fy * my + cy;
+    proj[0] = fx * mx + cx;
+    proj[1] = fy * my + cy;
 
-    if (d_r_d_p) {
-      d_r_d_p->setZero();
-      (*d_r_d_p)(0, 0) = fx * (d_rd_d_x * x + rd);
-      (*d_r_d_p)(0, 1) = fx * d_rd_d_y * x;
-      (*d_r_d_p)(0, 2) = fx * d_rd_d_z * x;
+    if constexpr (!std::is_same_v<DerivedJ3D, std::nullptr_t>) {
+      BASALT_ASSERT(d_proj_d_p3d);
+      d_proj_d_p3d->setZero();
+      (*d_proj_d_p3d)(0, 0) = fx * (d_rd_d_x * x + rd);
+      (*d_proj_d_p3d)(0, 1) = fx * d_rd_d_y * x;
+      (*d_proj_d_p3d)(0, 2) = fx * d_rd_d_z * x;
 
-      (*d_r_d_p)(1, 0) = fy * d_rd_d_x * y;
-      (*d_r_d_p)(1, 1) = fy * (d_rd_d_y * y + rd);
-      (*d_r_d_p)(1, 2) = fy * d_rd_d_z * y;
+      (*d_proj_d_p3d)(1, 0) = fy * d_rd_d_x * y;
+      (*d_proj_d_p3d)(1, 1) = fy * (d_rd_d_y * y + rd);
+      (*d_proj_d_p3d)(1, 2) = fy * d_rd_d_z * y;
+    } else {
+      UNUSED(d_proj_d_p3d);
+      UNUSED(d_rd_d_x);
+      UNUSED(d_rd_d_y);
+      UNUSED(d_rd_d_z);
     }
 
-    if (d_r_d_param) {
-      d_r_d_param->setZero();
-      (*d_r_d_param)(0, 0) = mx;
-      (*d_r_d_param)(0, 2) = Scalar(1);
-      (*d_r_d_param)(1, 1) = my;
-      (*d_r_d_param)(1, 3) = Scalar(1);
+    if constexpr (!std::is_same_v<DerivedJparam, std::nullptr_t>) {
+      BASALT_ASSERT(d_proj_d_param);
 
-      (*d_r_d_param)(0, 4) = fx * x * d_rd_d_w;
-      (*d_r_d_param)(1, 4) = fy * y * d_rd_d_w;
+      d_proj_d_param->setZero();
+      (*d_proj_d_param)(0, 0) = mx;
+      (*d_proj_d_param)(0, 2) = Scalar(1);
+      (*d_proj_d_param)(1, 1) = my;
+      (*d_proj_d_param)(1, 3) = Scalar(1);
+
+      (*d_proj_d_param)(0, 4) = fx * x * d_rd_d_w;
+      (*d_proj_d_param)(1, 4) = fy * y * d_rd_d_w;
+    } else {
+      UNUSED(d_proj_d_param);
+      UNUSED(d_rd_d_w);
     }
 
-    return true;
+    return is_valid;
   }
 
   /// @brief Unproject the point and optionally compute Jacobians
@@ -217,19 +246,29 @@ class FovCamera {
   /// @param[out] d_p3d_d_param point if not nullptr computed Jacobian of
   /// unprojection with respect to intrinsic parameters
   /// @return if unprojection is valid
-  inline bool unproject(const Vec2& p, Vec4& res, Mat42* d_r_d_p = nullptr,
-                        Mat4N* d_r_d_param = nullptr) const {
-    const Scalar& fx = param[0];
-    const Scalar& fy = param[1];
-    const Scalar& cx = param[2];
-    const Scalar& cy = param[3];
-    const Scalar& w = param[4];
+  template <class DerivedPoint2D, class DerivedPoint3D,
+            class DerivedJ2D = std::nullptr_t,
+            class DerivedJparam = std::nullptr_t>
+  inline bool unproject(const Eigen::MatrixBase<DerivedPoint2D>& proj,
+                        Eigen::MatrixBase<DerivedPoint3D>& p3d,
+                        DerivedJ2D d_p3d_d_proj = nullptr,
+                        DerivedJparam d_p3d_d_param = nullptr) const {
+    checkUnprojectionDerivedTypes<DerivedPoint2D, DerivedPoint3D, DerivedJ2D,
+                                  DerivedJparam, N>();
+
+    const typename EvalOrReference<DerivedPoint2D>::Type proj_eval(proj);
+
+    const Scalar& fx = param_[0];
+    const Scalar& fy = param_[1];
+    const Scalar& cx = param_[2];
+    const Scalar& cy = param_[3];
+    const Scalar& w = param_[4];
 
     const Scalar tan_w_2 = std::tan(w / Scalar(2));
     const Scalar mul2tanwby2 = tan_w_2 * Scalar(2);
 
-    const Scalar mx = (p[0] - cx) / fx;
-    const Scalar my = (p[1] - cy) / fy;
+    const Scalar mx = (proj_eval[0] - cx) / fx;
+    const Scalar my = (proj_eval[1] - cy) / fy;
 
     const Scalar rd = sqrt(mx * mx + my * my);
 
@@ -253,72 +292,89 @@ class FovCamera {
           (w * cos_rd_w * rd - sin_rd_w) * rd_inv * rd_inv / mul2tanwby2;
     }
 
-    res[0] = mx * ru;
-    res[1] = my * ru;
-    res[2] = cos_rd_w;
-    res[3] = Scalar(0);
+    p3d.setZero();
+    p3d[0] = mx * ru;
+    p3d[1] = my * ru;
+    p3d[2] = cos_rd_w;
 
-    if (d_r_d_p || d_r_d_param) {
-      Vec4 c0, c1;
+    if constexpr (!std::is_same_v<DerivedJ2D, std::nullptr_t> ||
+                  !std::is_same_v<DerivedJparam, std::nullptr_t>) {
+      constexpr int SIZE_3D = DerivedPoint3D::SizeAtCompileTime;
+      Eigen::Matrix<Scalar, SIZE_3D, 1> c0, c1;
 
+      c0.setZero();
       c0(0) = (ru + mx * d_ru_d_rd * mx * rd_inv) / fx;
       c0(1) = my * d_ru_d_rd * mx * rd_inv / fx;
       c0(2) = -sin_rd_w * w * mx * rd_inv / fx;
-      c0(3) = Scalar(0);
 
+      c1.setZero();
       c1(0) = my * d_ru_d_rd * mx * rd_inv / fy;
       c1(1) = (ru + my * d_ru_d_rd * my * rd_inv) / fy;
       c1(2) = -sin_rd_w * w * my * rd_inv / fy;
-      c1(3) = Scalar(0);
 
-      if (d_r_d_p) {
-        d_r_d_p->col(0) = c0;
-        d_r_d_p->col(1) = c1;
+      if constexpr (!std::is_same_v<DerivedJ2D, std::nullptr_t>) {
+        BASALT_ASSERT(d_p3d_d_proj);
+        d_p3d_d_proj->col(0) = c0;
+        d_p3d_d_proj->col(1) = c1;
+      } else {
+        UNUSED(d_p3d_d_proj);
       }
 
-      if (d_r_d_param) {
-        d_r_d_param->setZero();
+      if constexpr (!std::is_same_v<DerivedJparam, std::nullptr_t>) {
+        BASALT_ASSERT(d_p3d_d_param);
+        d_p3d_d_param->setZero();
 
-        d_r_d_param->col(2) = -c0;
-        d_r_d_param->col(3) = -c1;
+        d_p3d_d_param->col(2) = -c0;
+        d_p3d_d_param->col(3) = -c1;
 
-        d_r_d_param->col(0) = -c0 * mx;
-        d_r_d_param->col(1) = -c1 * my;
+        d_p3d_d_param->col(0) = -c0 * mx;
+        d_p3d_d_param->col(1) = -c1 * my;
 
         Scalar tmp = (cos_rd_w - (tan_w_2 * tan_w_2 + Scalar(1)) * sin_rd_w *
                                      rd_inv / (2 * tan_w_2)) /
                      mul2tanwby2;
 
-        (*d_r_d_param)(0, 4) = mx * tmp;
-        (*d_r_d_param)(1, 4) = my * tmp;
-        (*d_r_d_param)(2, 4) = -sin_rd_w * rd;
+        (*d_p3d_d_param)(0, 4) = mx * tmp;
+        (*d_p3d_d_param)(1, 4) = my * tmp;
+        (*d_p3d_d_param)(2, 4) = -sin_rd_w * rd;
+      } else {
+        UNUSED(d_p3d_d_param);
+        UNUSED(d_ru_d_rd);
       }
 
-      Scalar norm = res.norm();
+      Scalar norm = p3d.norm();
       Scalar norm_inv = Scalar(1) / norm;
       Scalar norm_inv2 = norm_inv * norm_inv;
       Scalar norm_inv3 = norm_inv2 * norm_inv;
 
-      Mat44 d_p_norm_d_p;
+      Eigen::Matrix<Scalar, SIZE_3D, SIZE_3D> d_p_norm_d_p;
       d_p_norm_d_p.setZero();
 
-      d_p_norm_d_p(0, 0) = norm_inv * (Scalar(1) - res[0] * res[0] * norm_inv2);
-      d_p_norm_d_p(1, 0) = -res[1] * res[0] * norm_inv3;
-      d_p_norm_d_p(2, 0) = -res[2] * res[0] * norm_inv3;
+      d_p_norm_d_p(0, 0) = norm_inv * (Scalar(1) - p3d[0] * p3d[0] * norm_inv2);
+      d_p_norm_d_p(1, 0) = -p3d[1] * p3d[0] * norm_inv3;
+      d_p_norm_d_p(2, 0) = -p3d[2] * p3d[0] * norm_inv3;
 
-      d_p_norm_d_p(0, 1) = -res[1] * res[0] * norm_inv3;
-      d_p_norm_d_p(1, 1) = norm_inv * (Scalar(1) - res[1] * res[1] * norm_inv2);
-      d_p_norm_d_p(2, 1) = -res[1] * res[2] * norm_inv3;
+      d_p_norm_d_p(0, 1) = -p3d[1] * p3d[0] * norm_inv3;
+      d_p_norm_d_p(1, 1) = norm_inv * (Scalar(1) - p3d[1] * p3d[1] * norm_inv2);
+      d_p_norm_d_p(2, 1) = -p3d[1] * p3d[2] * norm_inv3;
 
-      d_p_norm_d_p(0, 2) = -res[2] * res[0] * norm_inv3;
-      d_p_norm_d_p(1, 2) = -res[2] * res[1] * norm_inv3;
-      d_p_norm_d_p(2, 2) = norm_inv * (Scalar(1) - res[2] * res[2] * norm_inv2);
+      d_p_norm_d_p(0, 2) = -p3d[2] * p3d[0] * norm_inv3;
+      d_p_norm_d_p(1, 2) = -p3d[2] * p3d[1] * norm_inv3;
+      d_p_norm_d_p(2, 2) = norm_inv * (Scalar(1) - p3d[2] * p3d[2] * norm_inv2);
 
-      if (d_r_d_p) (*d_r_d_p) = d_p_norm_d_p * (*d_r_d_p);
-      if (d_r_d_param) (*d_r_d_param) = d_p_norm_d_p * (*d_r_d_param);
+      if constexpr (!std::is_same_v<DerivedJ2D, std::nullptr_t>) {
+        (*d_p3d_d_proj) = d_p_norm_d_p * (*d_p3d_d_proj);
+      }
+      if constexpr (!std::is_same_v<DerivedJparam, std::nullptr_t>) {
+        (*d_p3d_d_param) = d_p_norm_d_p * (*d_p3d_d_param);
+      }
+    } else {
+      UNUSED(d_p3d_d_proj);
+      UNUSED(d_p3d_d_param);
+      UNUSED(d_ru_d_rd);
     }
 
-    res /= res.norm();
+    p3d /= p3d.norm();
 
     return true;
   }
@@ -337,24 +393,24 @@ class FovCamera {
   ///
   /// @param[in] init vector [fx, fy, cx, cy]
   inline void setFromInit(const Vec4& init) {
-    param[0] = init[0];
-    param[1] = init[1];
-    param[2] = init[2];
-    param[3] = init[3];
-    param[4] = 1;
+    param_[0] = init[0];
+    param_[1] = init[1];
+    param_[2] = init[2];
+    param_[3] = init[3];
+    param_[4] = 1;
   }
 
   /// @brief Increment intrinsic parameters by inc
   ///
   /// @param[in] inc increment vector
-  void operator+=(const VecN& inc) { param += inc; }
+  void operator+=(const VecN& inc) { param_ += inc; }
 
   /// @brief Returns a const reference to the intrinsic parameters vector
   ///
   /// The order is following: \f$ \left[f_x, f_y, c_x, c_y, k1, k2, k3, k4
   /// \right]^T \f$
   /// @return const reference to the intrinsic parameters vector
-  const VecN& getParam() const { return param; }
+  const VecN& getParam() const { return param_; }
 
   /// @brief Projections used for unit-tests
   static Eigen::aligned_vector<FovCamera> getTestProjections() {
@@ -380,7 +436,7 @@ class FovCamera {
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
  private:
-  VecN param;
+  VecN param_;
 };
 
 }  // namespace basalt

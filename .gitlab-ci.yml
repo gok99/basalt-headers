@@ -1,4 +1,4 @@
-image: vladyslavusenko/b_image:latest
+image: vladyslavusenko/b_image_focal:latest
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
@@ -24,27 +24,41 @@ variables:
   script:
     - mkdir build
     - cd build
+    - cmake --version
     - cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
     - make -j4
-    - ctest
+    - ctest --output-on-failure
+
+# template for secondary build & unit test configurations (no builtin libs)
+.compile_and_test_no_builtin_template: &compile_and_test_no_builtin_definition
+  stage: build
+  script:
+    - scripts/ci-install-deps.sh ${BUILD_TYPE}
+    - mkdir build
+    - cd build
+    - cmake --version
+    - cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE}  -DBASALT_BUILTIN_EIGEN=OFF -DBASALT_BUILTIN_SOPHUS=Off -DBASALT_BUILTIN_CEREAL=OFF -DCMAKE_PREFIX_PATH="$PWD/../external/install"
+    - make -j4
+    - ctest --output-on-failure
 
 # main build with benchmark and coverage
-bionic-release-compile:
+focal-release-compile:
   <<: *prepare_docker_definition
   stage: build
   script:
     - mkdir build
     - cd build
+    - cmake --version
     - cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
     - make -j4
-    - ctest
+    - ctest --output-on-failure
     - ./test/benchmark_camera > ../benchmark_camera.txt
     - cd ../
     - mkdir build_coverage
     - cd build_coverage
     - cmake .. -DCMAKE_BUILD_TYPE=Coverage
     - make -j4
-    - ctest
+    - ctest --output-on-failure
     - lcov --directory . --capture --output-file coverage.info
     - lcov --remove coverage.info '*test/*' '/usr/*' '*thirdparty*' '*googletest*' --output-file coverage.info
     - lcov --list coverage.info
@@ -52,59 +66,66 @@ bionic-release-compile:
     paths:
     - benchmark_camera.txt
 
-bionic-debug-compile:
+focal-debug-compile:
   <<: *prepare_docker_definition
   <<: *compile_and_test_definition
   variables:
     BUILD_TYPE: Debug
 
-bionic-relwithdebinfo-compile:
+focal-relwithdebinfo-compile:
   <<: *prepare_docker_definition
   <<: *compile_and_test_definition
   variables:
     BUILD_TYPE: RelWithDebInfo
 
-bionic-asan-build:
+focal-asan-build:
   <<: *prepare_docker_definition
   <<: *compile_and_test_definition
   variables:
-    CC: clang-10
-    CXX: clang++-10
+    CC: clang-12
+    CXX: clang++-12
     BUILD_TYPE: SanitizerRelWithDebInfo
     # LeakSanitizer doesn't work in (non-priviliged) container
     ASAN_OPTIONS: "detect_leaks=0"
 
-xenial-release-compile:
+focal-release-no-builtin:
+  <<: *prepare_docker_definition
+  <<: *compile_and_test_no_builtin_definition
+
+bionic-release-compile:
   <<: *prepare_docker_definition
   <<: *compile_and_test_definition
-  image: vladyslavusenko/b_image_xenial:latest
+  image: vladyslavusenko/b_image_bionic:latest
 
-focal-release-compile:
-  <<: *prepare_docker_definition
+bigsur-relwithdebinfo-compile:
   <<: *compile_and_test_definition
-  image: vladyslavusenko/b_image_focal:latest
-
-mojave-relwithdebinfo-compile:
-  <<: *compile_and_test_definition
-  tags: [macos, "10.14"]
+  tags: [macos, "11", x86_64]
   variables:
     BUILD_TYPE: RelWithDebInfo
 
-#mojave-brewedclang-asan-build:
-#  <<: *compile_and_test_definition
-#  tags: [macos, "10.14"]
-#  variables:
-#    CC: /usr/local/opt/llvm/bin/clang
-#    CXX: /usr/local/opt/llvm/bin/clang++
-#    BUILD_TYPE: SanitizerRelWithDebInfo
-
-catalina-brewedclang-asan-build:
+bigsur-brewedclang-asan-build:
   <<: *compile_and_test_definition
-  tags: [macos, "10.15"]
+  tags: [macos, "11", x86_64]
   variables:
     CC: /usr/local/opt/llvm/bin/clang
     CXX: /usr/local/opt/llvm/bin/clang++
     BUILD_TYPE: SanitizerRelWithDebInfo
+
+catalina-asan-build:
+  <<: *compile_and_test_definition
+  tags: [macos, "10.15"]
+  variables:
+    BUILD_TYPE: SanitizerRelWithDebInfo
+
+catalina-build-no-builtin:
+  <<: *compile_and_test_no_builtin_definition
+  tags: [macos, "10.15"]
+
+monterey-arm-relwithdebinfo-compile:
+  <<: *compile_and_test_definition
+  tags: [macos, "12", arm64]
+  variables:
+    BUILD_TYPE: RelWithDebInfo
 
 # check if clang-format would make any changes
 clang-format:

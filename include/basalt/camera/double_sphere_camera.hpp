@@ -38,11 +38,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Eigen/Dense>
+#include <basalt/camera/camera_static_assert.hpp>
 
 #include <basalt/utils/sophus_utils.hpp>
 
 namespace basalt {
+
+using std::sqrt;
 
 /// @brief Double Sphere camera model
 ///
@@ -50,9 +52,10 @@ namespace basalt {
 /// This model has N=6 parameters \f$ \mathbf{i} = \left[f_x, f_y, c_x, c_y,
 /// \xi, \alpha \right]^T \f$ with \f$ \xi \in [-1,1], \alpha \in [0,1] \f$. See
 /// \ref project and \ref unproject functions for more details.
-template <typename Scalar = double>
+template <typename Scalar_ = double>
 class DoubleSphereCamera {
  public:
+  using Scalar = Scalar_;
   static constexpr int N = 6;  ///< Number of intrinsic parameters.
   static constexpr Scalar alpha_offset = 0.09; // hm: to shrink the effective viewing angle of the lens, larger the greater the shrink
 
@@ -68,17 +71,17 @@ class DoubleSphereCamera {
   using Mat4N = Eigen::Matrix<Scalar, 4, N>;
 
   /// @brief Default constructor with zero intrinsics
-  DoubleSphereCamera() { param.setZero(); }
+  DoubleSphereCamera() { param_.setZero(); }
 
   /// @brief Construct camera model with given vector of intrinsics
   ///
   /// @param[in] p vector of intrinsic parameters [fx, fy, cx, cy, xi, alpha]
-  explicit DoubleSphereCamera(const VecN& p) { param = p; }
+  explicit DoubleSphereCamera(const VecN& p) { param_ = p; }
 
   /// @brief Cast to different scalar type
   template <class Scalar2>
   DoubleSphereCamera<Scalar2> cast() const {
-    return DoubleSphereCamera<Scalar2>(param.template cast<Scalar2>());
+    return DoubleSphereCamera<Scalar2>(param_.template cast<Scalar2>());
   }
 
   /// @brief Camera model name
@@ -119,20 +122,29 @@ class DoubleSphereCamera {
   /// @param[out] d_proj_d_param point if not nullptr computed Jacobian of
   /// projection with respect to intrinsic parameters
   /// @return if projection is valid
-  inline bool project(const Vec4& p3d, Vec2& proj,
-                      Mat24* d_proj_d_p3d = nullptr,
-                      Mat2N* d_proj_d_param = nullptr) const {
-    const Scalar& fx = param[0];
-    const Scalar& fy = param[1];
-    const Scalar& cx = param[2];
-    const Scalar& cy = param[3];
+  template <class DerivedPoint3D, class DerivedPoint2D,
+            class DerivedJ3D = std::nullptr_t,
+            class DerivedJparam = std::nullptr_t>
+  inline bool project(const Eigen::MatrixBase<DerivedPoint3D>& p3d,
+                      Eigen::MatrixBase<DerivedPoint2D>& proj,
+                      DerivedJ3D d_proj_d_p3d = nullptr,
+                      DerivedJparam d_proj_d_param = nullptr) const {
+    checkProjectionDerivedTypes<DerivedPoint3D, DerivedPoint2D, DerivedJ3D,
+                                DerivedJparam, N>();
 
-    const Scalar& xi = param[4];
-    const Scalar& alpha = param[5];
+    const typename EvalOrReference<DerivedPoint3D>::Type p3d_eval(p3d);
 
-    const Scalar& x = p3d[0];
-    const Scalar& y = p3d[1];
-    const Scalar& z = p3d[2];
+    const Scalar& fx = param_[0];
+    const Scalar& fy = param_[1];
+    const Scalar& cx = param_[2];
+    const Scalar& cy = param_[3];
+
+    const Scalar& xi = param_[4];
+    const Scalar& alpha = param_[5];
+
+    const Scalar& x = p3d_eval[0];
+    const Scalar& y = p3d_eval[1];
+    const Scalar& z = p3d_eval[2];
 
     const Scalar xx = x * x;
     const Scalar yy = y * y;
@@ -147,7 +159,8 @@ class DoubleSphereCamera {
                                           : alpha / (Scalar(1) - alpha);
     const Scalar w2 =
         (w1 + xi) / sqrt(Scalar(2) * w1 * xi + xi * xi + Scalar(1));
-    if (z <= -w2 * d1) return false;
+
+    const bool is_valid = (z > -w2 * d1);
 
     const Scalar k = xi * d1 + z;
     const Scalar kk = k * k;
@@ -163,52 +176,57 @@ class DoubleSphereCamera {
     proj[0] = fx * mx + cx;
     proj[1] = fy * my + cy;
 
-    if (d_proj_d_p3d || d_proj_d_param) {
+    if constexpr (!std::is_same_v<DerivedJ3D, std::nullptr_t>) {
+      BASALT_ASSERT(d_proj_d_p3d);
+
       const Scalar norm2 = norm * norm;
+      const Scalar xy = x * y;
+      const Scalar tt2 = xi * z / d1 + Scalar(1);
 
-      if (d_proj_d_p3d) {
-        const Scalar xy = x * y;
-        const Scalar tt2 = xi * z / d1 + Scalar(1);
+      const Scalar d_norm_d_r2 = (xi * (Scalar(1) - alpha) / d1 +
+                                  alpha * (xi * k / d1 + Scalar(1)) / d2) /
+                                 norm2;
 
-        const Scalar d_norm_d_r2 = (xi * (Scalar(1) - alpha) / d1 +
-                                    alpha * (xi * k / d1 + Scalar(1)) / d2) /
-                                   norm2;
+      const Scalar tmp2 =
+          ((Scalar(1) - alpha) * tt2 + alpha * k * tt2 / d2) / norm2;
 
-        const Scalar tmp2 =
-            ((Scalar(1) - alpha) * tt2 + alpha * k * tt2 / d2) / norm2;
+      d_proj_d_p3d->setZero();
+      (*d_proj_d_p3d)(0, 0) = fx * (Scalar(1) / norm - xx * d_norm_d_r2);
+      (*d_proj_d_p3d)(1, 0) = -fy * xy * d_norm_d_r2;
 
-        (*d_proj_d_p3d)(0, 0) = fx * (Scalar(1) / norm - xx * d_norm_d_r2);
-        (*d_proj_d_p3d)(1, 0) = -fy * xy * d_norm_d_r2;
+      (*d_proj_d_p3d)(0, 1) = -fx * xy * d_norm_d_r2;
+      (*d_proj_d_p3d)(1, 1) = fy * (Scalar(1) / norm - yy * d_norm_d_r2);
 
-        (*d_proj_d_p3d)(0, 1) = -fx * xy * d_norm_d_r2;
-        (*d_proj_d_p3d)(1, 1) = fy * (Scalar(1) / norm - yy * d_norm_d_r2);
-
-        (*d_proj_d_p3d)(0, 2) = -fx * x * tmp2;
-        (*d_proj_d_p3d)(1, 2) = -fy * y * tmp2;
-
-        (*d_proj_d_p3d)(0, 3) = Scalar(0);
-        (*d_proj_d_p3d)(1, 3) = Scalar(0);
-      }
-
-      if (d_proj_d_param) {
-        (*d_proj_d_param).setZero();
-        (*d_proj_d_param)(0, 0) = mx;
-        (*d_proj_d_param)(0, 2) = Scalar(1);
-        (*d_proj_d_param)(1, 1) = my;
-        (*d_proj_d_param)(1, 3) = Scalar(1);
-
-        const Scalar tmp4 = (alpha - Scalar(1) - alpha * k / d2) * d1 / norm2;
-        const Scalar tmp5 = (k - d2) / norm2;
-
-        (*d_proj_d_param)(0, 4) = fx * x * tmp4;
-        (*d_proj_d_param)(1, 4) = fy * y * tmp4;
-
-        (*d_proj_d_param)(0, 5) = fx * x * tmp5;
-        (*d_proj_d_param)(1, 5) = fy * y * tmp5;
-      }
+      (*d_proj_d_p3d)(0, 2) = -fx * x * tmp2;
+      (*d_proj_d_p3d)(1, 2) = -fy * y * tmp2;
+    } else {
+      UNUSED(d_proj_d_p3d);
     }
 
-    return true;
+    if constexpr (!std::is_same_v<DerivedJparam, std::nullptr_t>) {
+      BASALT_ASSERT(d_proj_d_param);
+
+      const Scalar norm2 = norm * norm;
+
+      (*d_proj_d_param).setZero();
+      (*d_proj_d_param)(0, 0) = mx;
+      (*d_proj_d_param)(0, 2) = Scalar(1);
+      (*d_proj_d_param)(1, 1) = my;
+      (*d_proj_d_param)(1, 3) = Scalar(1);
+
+      const Scalar tmp4 = (alpha - Scalar(1) - alpha * k / d2) * d1 / norm2;
+      const Scalar tmp5 = (k - d2) / norm2;
+
+      (*d_proj_d_param)(0, 4) = fx * x * tmp4;
+      (*d_proj_d_param)(1, 4) = fy * y * tmp4;
+
+      (*d_proj_d_param)(0, 5) = fx * x * tmp5;
+      (*d_proj_d_param)(1, 5) = fy * y * tmp5;
+    } else {
+      UNUSED(d_proj_d_param);
+    }
+
+    return is_valid;
   }
 
   /// @brief Unproject the point and optionally compute Jacobians
@@ -243,26 +261,34 @@ class DoubleSphereCamera {
   /// @param[out] d_p3d_d_param point if not nullptr computed Jacobian of
   /// unprojection with respect to intrinsic parameters
   /// @return if unprojection is valid
-  inline bool unproject(const Vec2& proj, Vec4& p3d,
-                        Mat42* d_p3d_d_proj = nullptr,
-                        Mat4N* d_p3d_d_param = nullptr) const {
-    const Scalar& fx = param[0];
-    const Scalar& fy = param[1];
-    const Scalar& cx = param[2];
-    const Scalar& cy = param[3];
+  template <class DerivedPoint2D, class DerivedPoint3D,
+            class DerivedJ2D = std::nullptr_t,
+            class DerivedJparam = std::nullptr_t>
+  inline bool unproject(const Eigen::MatrixBase<DerivedPoint2D>& proj,
+                        Eigen::MatrixBase<DerivedPoint3D>& p3d,
+                        DerivedJ2D d_p3d_d_proj = nullptr,
+                        DerivedJparam d_p3d_d_param = nullptr) const {
+    checkUnprojectionDerivedTypes<DerivedPoint2D, DerivedPoint3D, DerivedJ2D,
+                                  DerivedJparam, N>();
 
-    const Scalar& xi = param[4];
-    const Scalar& alpha = param[5];
+    const typename EvalOrReference<DerivedPoint2D>::Type proj_eval(proj);
 
-    const Scalar mx = (proj[0] - cx) / fx;
-    const Scalar my = (proj[1] - cy) / fy;
+    const Scalar& fx = param_[0];
+    const Scalar& fy = param_[1];
+    const Scalar& cx = param_[2];
+    const Scalar& cy = param_[3];
+
+    const Scalar& xi = param_[4];
+    const Scalar& alpha = param_[5];
+
+    const Scalar mx = (proj_eval[0] - cx) / fx;
+    const Scalar my = (proj_eval[1] - cy) / fy;
 
     const Scalar r2 = mx * mx + my * my;
 
-    if (alpha > Scalar(0.5)) {
-      // hm: the bigger the apparent alpha > 0.5, the smaller the acceptable region of r^2
-      if (r2 >= Scalar(1) / (Scalar(2) * (alpha + alpha_offset) - Scalar(1))) return false;
-    }
+    const bool is_valid =
+        !static_cast<bool>(alpha > Scalar(0.5) &&
+                           (r2 >= Scalar(1) / (Scalar(2) * alpha - Scalar(1))));
 
     const Scalar xi2_2 = alpha * alpha;
     const Scalar xi1_2 = xi * xi;
@@ -278,12 +304,13 @@ class DoubleSphereCamera {
     const Scalar sqrt1 = sqrt(mz2 + (Scalar(1) - xi1_2) * r2);
     const Scalar k = (mz * xi + sqrt1) / norm1;
 
+    p3d.setZero();
     p3d[0] = k * mx;
     p3d[1] = k * my;
     p3d[2] = k * mz - xi;
-    p3d[3] = Scalar(0);
 
-    if (d_p3d_d_proj || d_p3d_d_param) {
+    if constexpr (!std::is_same_v<DerivedJ2D, std::nullptr_t> ||
+                  !std::is_same_v<DerivedJparam, std::nullptr_t>) {
       const Scalar norm2_2 = norm2 * norm2;
       const Scalar norm1_2 = norm1 * norm1;
 
@@ -310,37 +337,42 @@ class DoubleSphereCamera {
       const Scalar d_k_d_mx = d_k_d_r2 * 2 * mx;
       const Scalar d_k_d_my = d_k_d_r2 * 2 * my;
 
-      Vec4 c0, c1;
+      constexpr int SIZE_3D = DerivedPoint3D::SizeAtCompileTime;
+      Eigen::Matrix<Scalar, SIZE_3D, 1> c0, c1;
 
+      c0.setZero();
       c0[0] = (mx * d_k_d_mx + k);
       c0[1] = my * d_k_d_mx;
       c0[2] = (mz * d_k_d_mx + k * d_mz_d_mx);
-      c0[3] = Scalar(0);
-
       c0 /= fx;
 
+      c1.setZero();
       c1[0] = mx * d_k_d_my;
       c1[1] = (my * d_k_d_my + k);
       c1[2] = (mz * d_k_d_my + k * d_mz_d_my);
-      c1[3] = Scalar(0);
-
       c1 /= fy;
 
-      if (d_p3d_d_proj) {
+      if constexpr (!std::is_same_v<DerivedJ2D, std::nullptr_t>) {
+        BASALT_ASSERT(d_p3d_d_proj);
         d_p3d_d_proj->col(0) = c0;
         d_p3d_d_proj->col(1) = c1;
+      } else {
+        UNUSED(d_p3d_d_proj);
       }
 
-      if (d_p3d_d_param) {
+      if constexpr (!std::is_same_v<DerivedJparam, std::nullptr_t>) {
+        BASALT_ASSERT(d_p3d_d_param);
         const Scalar d_k_d_xi1 = (mz * sqrt1 - xi * r2) / (sqrt1 * norm1);
 
-        const Scalar d_mz_d_xi2 = (Scalar(1) - r2 * xi2_2) *
-                                      (r2 * alpha / sqrt2 - sqrt2 + Scalar(1)) /
-                                      norm2_2 -
-                                  Scalar(2) * r2 * alpha / norm2;
+        const Scalar d_mz_d_xi2 =
+            ((Scalar(1) - r2 * xi2_2) *
+                 (r2 * alpha / sqrt2 - sqrt2 + Scalar(1)) / norm2 -
+             Scalar(2) * r2 * alpha) /
+            norm2;
 
         const Scalar d_k_d_xi2 = d_k_d_mz * d_mz_d_xi2;
 
+        d_p3d_d_param->setZero();
         (*d_p3d_d_param).col(0) = -c0 * mx;
         (*d_p3d_d_param).col(1) = -c1 * my;
 
@@ -350,16 +382,20 @@ class DoubleSphereCamera {
         (*d_p3d_d_param)(0, 4) = mx * d_k_d_xi1;
         (*d_p3d_d_param)(1, 4) = my * d_k_d_xi1;
         (*d_p3d_d_param)(2, 4) = mz * d_k_d_xi1 - 1;
-        (*d_p3d_d_param)(3, 4) = Scalar(0);
 
         (*d_p3d_d_param)(0, 5) = mx * d_k_d_xi2;
         (*d_p3d_d_param)(1, 5) = my * d_k_d_xi2;
         (*d_p3d_d_param)(2, 5) = mz * d_k_d_xi2 + k * d_mz_d_xi2;
-        (*d_p3d_d_param)(3, 5) = Scalar(0);
+      } else {
+        UNUSED(d_p3d_d_param);
+        UNUSED(d_k_d_mz);
       }
+    } else {
+      UNUSED(d_p3d_d_proj);
+      UNUSED(d_p3d_d_param);
     }
 
-    return true;
+    return is_valid;
   }
 
   inline bool inBound(const Vec2& proj) const{
@@ -391,12 +427,12 @@ class DoubleSphereCamera {
   ///
   /// @param[in] init vector [fx, fy, cx, cy]
   inline void setFromInit(const Vec4& init) {
-    param[0] = init[0];
-    param[1] = init[1];
-    param[2] = init[2];
-    param[3] = init[3];
-    param[4] = 0;
-    param[5] = 0.5;
+    param_[0] = init[0];
+    param_[1] = init[1];
+    param_[2] = init[2];
+    param_[3] = init[3];
+    param_[4] = 0;
+    param_[5] = 0.5;
   }
 
   /// @brief Increment intrinsic parameters by inc and clamp the values to the
@@ -404,9 +440,9 @@ class DoubleSphereCamera {
   ///
   /// @param[in] inc increment vector
   void operator+=(const VecN& inc) {
-    param += inc;
-    param[4] = std::clamp(param[4], Scalar(-1), Scalar(1));
-    param[5] = std::clamp(param[5], Scalar(0), Scalar(1));
+    param_ += inc;
+    param_[4] = std::clamp(param_[4], Scalar(-1), Scalar(1));
+    param_[5] = std::clamp(param_[5], Scalar(0), Scalar(1));
   }
 
   /// @brief Returns a const reference to the intrinsic parameters vector
@@ -414,7 +450,7 @@ class DoubleSphereCamera {
   /// The order is following: \f$ \left[f_x, f_y, c_x, c_y, \xi, \alpha
   /// \right]^T \f$
   /// @return const reference to the intrinsic parameters vector
-  const VecN& getParam() const { return param; }
+  const VecN& getParam() const { return param_; }
 
   /// @brief Projections used for unit-tests
   static Eigen::aligned_vector<DoubleSphereCamera> getTestProjections() {
@@ -429,7 +465,7 @@ class DoubleSphereCamera {
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
  private:
-  VecN param;
+  VecN param_;
 };
 
 }  // namespace basalt

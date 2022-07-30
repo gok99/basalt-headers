@@ -38,23 +38,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <basalt/camera/bal_camera.hpp>
 #include <basalt/camera/double_sphere_camera.hpp>
 #include <basalt/camera/extended_camera.hpp>
 #include <basalt/camera/fov_camera.hpp>
 #include <basalt/camera/kannala_brandt_camera4.hpp>
 #include <basalt/camera/pinhole_camera.hpp>
+#include <basalt/camera/pinhole_radtan8_camera.hpp>
 #include <basalt/camera/unified_camera.hpp>
 
 #include <variant>
 
 namespace basalt {
 
+using std::sqrt;
+
 /// @brief Generic camera model that can store different camera models
 ///
 /// Particular class of camera model is stored as \ref variant and can be casted
 /// to specific type using std::visit.
-template <typename Scalar>
+template <typename Scalar_>
 class GenericCamera {
+  using Scalar = Scalar_;
+
   using Vec2 = Eigen::Matrix<Scalar, 2, 1>;
   using Vec3 = Eigen::Matrix<Scalar, 3, 1>;
   using Vec4 = Eigen::Matrix<Scalar, 4, 1>;
@@ -64,11 +70,11 @@ class GenericCamera {
   using Mat42 = Eigen::Matrix<Scalar, 4, 2>;
   using Mat4 = Eigen::Matrix<Scalar, 4, 4>;
 
+  /// Possible variants of camera models.
   using VariantT =
       std::variant<ExtendedUnifiedCamera<Scalar>, DoubleSphereCamera<Scalar>,
                    KannalaBrandtCamera4<Scalar>, UnifiedCamera<Scalar>,
-                   PinholeCamera<Scalar>>;  ///< Possible variants of camera
-                                            ///< models.
+                   PinholeCamera<Scalar>, PinholeRadtan8Camera<Scalar>>;
 
  public:
   /// @brief Cast to different scalar type
@@ -126,8 +132,15 @@ class GenericCamera {
   /// @param[out] d_proj_d_p3d if not nullptr computed Jacobian of projection
   /// with respect to p3d
   /// @return if projection is valid
+  template <typename DerivedJ3DPtr = std::nullptr_t>
   inline bool project(const Vec4& p3d, Vec2& proj,
-                      Mat24* d_proj_d_p3d = nullptr) const {
+                      DerivedJ3DPtr d_proj_d_p3d = nullptr) const {
+    if constexpr (!std::is_same_v<DerivedJ3DPtr, std::nullptr_t>) {
+      static_assert(std::is_pointer_v<DerivedJ3DPtr>);
+      using DerivedJ3D = typename std::remove_pointer<DerivedJ3DPtr>::type;
+      EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(DerivedJ3D, 2, 4);
+    }
+
     bool res;
     std::visit(
         [&](const auto& cam) { res = cam.project(p3d, proj, d_proj_d_p3d); },
@@ -144,8 +157,65 @@ class GenericCamera {
   /// @param[out] d_p3d_d_proj if not nullptr computed Jacobian of unprojection
   /// with respect to proj
   /// @return if unprojection is valid
+  template <typename DerivedJ2DPtr = std::nullptr_t>
   inline bool unproject(const Vec2& proj, Vec4& p3d,
-                        Mat42* d_p3d_d_proj = nullptr) const {
+                        DerivedJ2DPtr d_p3d_d_proj = nullptr) const {
+    if constexpr (!std::is_same_v<DerivedJ2DPtr, std::nullptr_t>) {
+      static_assert(std::is_pointer_v<DerivedJ2DPtr>);
+      using DerivedJ2D = typename std::remove_pointer<DerivedJ2DPtr>::type;
+      EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(DerivedJ2D, 4, 2);
+    }
+
+    bool res;
+    std::visit(
+        [&](const auto& cam) { res = cam.unproject(proj, p3d, d_p3d_d_proj); },
+        variant);
+    return res;
+  }
+
+  /// @brief Project a single point and optionally compute Jacobian
+  ///
+  /// **SLOW** function, as it requires vtable lookup for every projection.
+  ///
+  /// @param[in] p3d point to project
+  /// @param[out] proj result of projection
+  /// @param[out] d_proj_d_p3d if not nullptr computed Jacobian of projection
+  /// with respect to p3d
+  /// @return if projection is valid
+  template <typename DerivedJ3DPtr = std::nullptr_t>
+  inline bool project(const Vec3& p3d, Vec2& proj,
+                      DerivedJ3DPtr d_proj_d_p3d = nullptr) const {
+    if constexpr (!std::is_same_v<DerivedJ3DPtr, std::nullptr_t>) {
+      static_assert(std::is_pointer_v<DerivedJ3DPtr>);
+      using DerivedJ3D = typename std::remove_pointer<DerivedJ3DPtr>::type;
+      EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(DerivedJ3D, 2, 3);
+    }
+
+    bool res;
+    std::visit(
+        [&](const auto& cam) { res = cam.project(p3d, proj, d_proj_d_p3d); },
+        variant);
+    return res;
+  }
+
+  /// @brief Unproject a single point and optionally compute Jacobian
+  ///
+  /// **SLOW** function, as it requires vtable lookup for every unprojection.
+  ///
+  /// @param[in] proj point to unproject
+  /// @param[out] p3d result of unprojection
+  /// @param[out] d_p3d_d_proj if not nullptr computed Jacobian of unprojection
+  /// with respect to proj
+  /// @return if unprojection is valid
+  template <typename DerivedJ2DPtr = std::nullptr_t>
+  inline bool unproject(const Vec2& proj, Vec3& p3d,
+                        DerivedJ2DPtr d_p3d_d_proj = nullptr) const {
+    if constexpr (!std::is_same_v<DerivedJ2DPtr, std::nullptr_t>) {
+      static_assert(std::is_pointer_v<DerivedJ2DPtr>);
+      using DerivedJ2D = typename std::remove_pointer<DerivedJ2DPtr>::type;
+      EIGEN_STATIC_ASSERT_MATRIX_SPECIFIC_SIZE(DerivedJ2D, 3, 2);
+    }
+
     bool res;
     std::visit(
         [&](const auto& cam) { res = cam.unproject(proj, p3d, d_p3d_d_proj); },
@@ -276,8 +346,8 @@ class GenericCamera {
   static GenericCamera<Scalar> fromString(const std::string& name) {
     GenericCamera<Scalar> res;
 
-    constexpr size_t variant_size = std::variant_size<VariantT>::value;
-    visitAllTypes<variant_size - 1>(res, name);
+    constexpr size_t VARIANT_SIZE = std::variant_size<VariantT>::value;
+    visitAllTypes<VARIANT_SIZE - 1>(res, name);
 
     return res;
   }

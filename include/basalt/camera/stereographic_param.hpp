@@ -50,9 +50,10 @@ namespace basalt {
 /// mapping is smooth and bijective. The illustrations shows 3 examples of unit
 /// vectors parametrized with a point in the 2D plane. See
 /// \ref project and \ref unproject functions for more details.
-template <typename Scalar = double>
+template <typename Scalar_ = double>
 class StereographicParam {
  public:
+  using Scalar = Scalar_;
   using Vec2 = Eigen::Matrix<Scalar, 2, 1>;
   using Vec4 = Eigen::Matrix<Scalar, 4, 1>;
 
@@ -80,7 +81,7 @@ class StereographicParam {
     const Scalar norm = p3d[2] + sqrt;
     const Scalar norm_inv = Scalar(1) / norm;
 
-    const Vec2 res(p3d[0] * norm_inv, p3d[1] * norm_inv);
+    Vec2 res(p3d[0] * norm_inv, p3d[1] * norm_inv);
 
     if (d_r_d_p) {
       Scalar norm_inv2 = norm_inv * norm_inv;
@@ -127,8 +128,8 @@ class StereographicParam {
 
     const Scalar norm_inv = Scalar(2) / (Scalar(1) + r2);
 
-    const Vec4 res(proj[0] * norm_inv, proj[1] * norm_inv, norm_inv - Scalar(1),
-                   Scalar(0));
+    Vec4 res(proj[0] * norm_inv, proj[1] * norm_inv, norm_inv - Scalar(1),
+             Scalar(0));
 
     if (d_r_d_p) {
       const Scalar norm_inv2 = norm_inv * norm_inv;
