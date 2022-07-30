@@ -400,12 +400,12 @@ class DoubleSphereCamera {
 
   inline bool inBound(const Vec2& proj) const{
 
-    const Scalar& fx = param[0];
-    const Scalar& fy = param[1];
-    const Scalar& cx = param[2];
-    const Scalar& cy = param[3];
+    const Scalar& fx = param_[0];
+    const Scalar& fy = param_[1];
+    const Scalar& cx = param_[2];
+    const Scalar& cy = param_[3];
 
-    const Scalar& alpha = param[5];
+    const Scalar& alpha = param_[5];
 
     const Scalar mx = (proj[0] - cx) / fx;
     const Scalar my = (proj[1] - cy) / fy;

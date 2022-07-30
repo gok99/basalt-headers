@@ -108,6 +108,10 @@ struct PoseState {
 
   int64_t t_ns;  ///< timestamp of the state in nanoseconds
   SE3 T_w_i;     ///< pose of the state
+
+  // hm: add metadata about pose and connectivity
+  bool is_kf;
+  int connected_lm_with_previous_kf;
 };
 
 /// @brief State that consists of SE(3) pose and linear velocity at a certain
