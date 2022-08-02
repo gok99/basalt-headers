@@ -96,6 +96,9 @@ struct Calibration {
     return new_cam;
   }
 
+  // hm: transformation from body (base_link) to IMU
+  SE3 T_i_b;
+
   /// @brief Vector of transformations from camera to IMU
   ///
   /// Point in camera coordinate frame \f$ p_c \f$ can be transformed to the

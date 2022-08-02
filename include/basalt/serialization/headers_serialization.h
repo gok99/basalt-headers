@@ -274,7 +274,8 @@ inline void load(Archive& ar, basalt::RdSpline<DIM, ORDER, Scalar>& spline) {
 
 template <class Archive, class Scalar>
 inline void serialize(Archive& ar, basalt::Calibration<Scalar>& cam) {
-  ar(cereal::make_nvp("T_imu_cam", cam.T_i_c),
+  ar(cereal::make_nvp("T_imu_body", cam.T_i_b),
+     cereal::make_nvp("T_imu_cam", cam.T_i_c),
      cereal::make_nvp("intrinsics", cam.intrinsics),
      cereal::make_nvp("resolution", cam.resolution),
      cereal::make_nvp("calib_accel_bias", cam.calib_accel_bias.getParam()),
