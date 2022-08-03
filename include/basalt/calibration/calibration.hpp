@@ -96,6 +96,11 @@ struct Calibration {
     return new_cam;
   }
 
+  // hm: give a string name for each camera
+  std::vector<std::string> cam_names;
+
+  std::string imu_name;
+
   // hm: transformation from body (base_link) to IMU
   SE3 T_i_b;
 
