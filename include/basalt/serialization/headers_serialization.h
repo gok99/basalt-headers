@@ -85,6 +85,32 @@ inline void save(Archive& ar, const basalt::KannalaBrandtCamera4<Scalar>& cam) {
 }
 
 template <class Archive, class Scalar>
+inline void save(Archive& ar, const basalt::KannalaBrandtCamera18<Scalar>& cam) {
+  ar(cereal::make_nvp("fx", cam.getParam()[0]),
+     cereal::make_nvp("fy", cam.getParam()[1]),
+     cereal::make_nvp("cx", cam.getParam()[2]),
+     cereal::make_nvp("cy", cam.getParam()[3]),
+     cereal::make_nvp("k1", cam.getParam()[4]),
+     cereal::make_nvp("k2", cam.getParam()[5]),
+     cereal::make_nvp("k3", cam.getParam()[6]),
+     cereal::make_nvp("k4", cam.getParam()[7]),
+     cereal::make_nvp("l1", cam.getParam()[8]),
+     cereal::make_nvp("l2", cam.getParam()[9]),
+     cereal::make_nvp("l3", cam.getParam()[10]),
+     cereal::make_nvp("m1", cam.getParam()[11]),
+     cereal::make_nvp("m2", cam.getParam()[12]),
+     cereal::make_nvp("m3", cam.getParam()[13]),
+     cereal::make_nvp("i1", cam.getParam()[14]),
+     cereal::make_nvp("i2", cam.getParam()[15]),
+     cereal::make_nvp("i3", cam.getParam()[16]),
+     cereal::make_nvp("i4", cam.getParam()[17]),
+     cereal::make_nvp("j1", cam.getParam()[18]),
+     cereal::make_nvp("j2", cam.getParam()[19]),
+     cereal::make_nvp("j3", cam.getParam()[20]),
+     cereal::make_nvp("j4", cam.getParam()[21]));
+}
+
+template <class Archive, class Scalar>
 inline void load(Archive& ar, basalt::KannalaBrandtCamera4<Scalar>& cam) {
   Eigen::Matrix<Scalar, 8, 1> intr;
 
@@ -94,6 +120,34 @@ inline void load(Archive& ar, basalt::KannalaBrandtCamera4<Scalar>& cam) {
      cereal::make_nvp("k3", intr[6]), cereal::make_nvp("k4", intr[7]));
 
   cam = basalt::KannalaBrandtCamera4<Scalar>(intr);
+}
+
+template <class Archive, class Scalar>
+inline void load(Archive& ar, basalt::KannalaBrandtCamera18<Scalar>& cam) {
+  Eigen::Matrix<Scalar, 22, 1> intr;
+
+  ar(cereal::make_nvp("fx", intr[0]), cereal::make_nvp("fy", intr[1]),
+     cereal::make_nvp("cx", intr[2]), cereal::make_nvp("cy", intr[3]),
+     cereal::make_nvp("k1", intr[4]),
+     cereal::make_nvp("k2", intr[5]),
+     cereal::make_nvp("k3", intr[6]),
+     cereal::make_nvp("k4", intr[7]),
+     cereal::make_nvp("l1", intr[8]),
+     cereal::make_nvp("l2", intr[9]),
+     cereal::make_nvp("l3", intr[10]),
+     cereal::make_nvp("m1", intr[11]),
+     cereal::make_nvp("m2", intr[12]),
+     cereal::make_nvp("m3", intr[13]),
+     cereal::make_nvp("i1", intr[14]),
+     cereal::make_nvp("i2", intr[15]),
+     cereal::make_nvp("i3", intr[16]),
+     cereal::make_nvp("i4", intr[17]),
+     cereal::make_nvp("j1", intr[18]),
+     cereal::make_nvp("j2", intr[19]),
+     cereal::make_nvp("j3", intr[20]),
+     cereal::make_nvp("j4", intr[21]));
+
+  cam = basalt::KannalaBrandtCamera18<Scalar>(intr);
 }
 
 template <class Archive, class Scalar>
