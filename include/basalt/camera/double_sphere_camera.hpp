@@ -422,17 +422,22 @@ class DoubleSphereCamera {
 
   /// @brief Set parameters from initialization
   ///
-  /// Initializes the camera model to  \f$ \left[f_x, f_y, c_x, c_y, 0, 0.5
+  /// Initializes the camera model to  \f$ \left[f_x, f_y, c_x, c_y, xi, alpha
   /// \right]^T \f$
   ///
   /// @param[in] init vector [fx, fy, cx, cy]
   inline void setFromInit(const Vec4& init) {
-    param_[0] = init[0];
-    param_[1] = init[1];
+
+    constexpr Scalar xi = -0.1;
+    constexpr Scalar alpha = 0.6;
+
+    // hm: scale the focal length accordingly
+    param_[0] = (Scalar(1) + xi) * init[0];
+    param_[1] = (Scalar(1) + xi) * init[1];
     param_[2] = init[2];
     param_[3] = init[3];
-    param_[4] = 0;
-    param_[5] = 0.5;
+    param_[4] = xi;
+    param_[5] = alpha;
   }
 
   /// @brief Increment intrinsic parameters by inc and clamp the values to the
