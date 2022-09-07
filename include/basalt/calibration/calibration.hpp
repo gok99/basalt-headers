@@ -152,6 +152,9 @@ struct Calibration {
   /// accelerometer.
   Vec3 accel_bias_std;
 
+  /// @brief stereo pair, indexing the intrinsics index
+  std::vector<std::pair<int, int>> stereo_pairs;
+
   /// @brief Dicrete time gyroscope noise standard deviation.
   ///
   /// \f$ \sigma_d = \sigma_c \sqrt{r} \f$, where \f$ r \f$ is IMU update

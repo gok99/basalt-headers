@@ -287,6 +287,7 @@ inline void serialize(Archive& ar, basalt::Calibration<Scalar>& cam) {
      cereal::make_nvp("gyro_noise_std", cam.gyro_noise_std),
      cereal::make_nvp("accel_bias_std", cam.accel_bias_std),
      cereal::make_nvp("gyro_bias_std", cam.gyro_bias_std),
+     cereal::make_nvp("stereo_pairs", cam.stereo_pairs),
      cereal::make_nvp("cam_time_offset_ns", cam.cam_time_offset_ns),
      cereal::make_nvp("vignette", cam.vignette));
 }
