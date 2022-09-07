@@ -518,6 +518,13 @@ inline bool inBound(const Vec2& proj) const{
     param_[7] = 0;
   }
 
+  inline void scaleParam(double scale) {
+    param_[0] *= scale;
+    param_[1] *= scale;
+    param_[2] *= scale;
+    param_[3] *= scale;
+  }
+
   /// @brief Projections used for unit-tests
   static Eigen::aligned_vector<KannalaBrandtCamera4> getTestProjections() {
     Eigen::aligned_vector<KannalaBrandtCamera4> res;

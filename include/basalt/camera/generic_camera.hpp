@@ -107,6 +107,12 @@ class GenericCamera {
     std::visit([&](auto& v) { return v.setFromInit(init); }, variant);
   }
 
+  /// @brief Scale the intrinsic parameters, due to image resize in most cases
+
+  inline void scaleParam(double scale) {
+    std::visit([&](auto& v) { return v.scaleParam(scale); }, variant);
+  }
+
   /// @brief Increment intrinsic parameters by inc and if necessary clamp the
   /// values to the valid range
   inline void applyInc(const VecX& inc) {

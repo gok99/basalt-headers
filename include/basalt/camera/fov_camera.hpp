@@ -400,6 +400,11 @@ class FovCamera {
     param_[4] = 1;
   }
 
+  inline void scaleParam(double scale) {
+    UNUSED(scale);
+    throw std::runtime_error("not implemented");
+  }
+
   /// @brief Increment intrinsic parameters by inc
   ///
   /// @param[in] inc increment vector

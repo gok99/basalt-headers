@@ -262,6 +262,11 @@ class BalCamera {
     param_[2] = 0;
   }
 
+  inline void scaleParam(double scale) {
+    UNUSED(scale);
+    throw std::runtime_error("not implemented");
+  }
+
   /// @brief Increment intrinsic parameters by inc and clamp the values to the
   /// valid range
   ///

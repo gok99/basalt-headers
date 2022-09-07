@@ -283,6 +283,13 @@ class PinholeCamera {
     param_[3] = init[3];
   }
 
+  inline void scaleParam(double scale) {
+    param_[0] *= scale;
+    param_[1] *= scale;
+    param_[2] *= scale;
+    param_[3] *= scale;
+  }
+
   /// @brief Increment intrinsic parameters by inc
   ///
   /// @param[in] inc increment vector
