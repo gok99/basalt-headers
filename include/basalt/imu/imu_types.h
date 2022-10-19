@@ -270,6 +270,9 @@ struct ImuData {
   Vec3 accel;    ///< Accelerometer measurement
   Vec3 gyro;     ///< Gyroscope measurement
 
+  bool shock_detected = false;
+  int missed_frame = 0; // we do not use sequence directly here, as our current imu driver only give seq of rolling 0 - 255
+
   /// @brief Default constructor with zero measurements.
   ImuData() {
     t_ns = 0;
