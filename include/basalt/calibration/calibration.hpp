@@ -92,6 +92,7 @@ struct Calibration {
     new_cam.accel_noise_std = accel_noise_std.template cast<Scalar2>();
     new_cam.gyro_bias_std = gyro_bias_std.template cast<Scalar2>();
     new_cam.accel_bias_std = accel_bias_std.template cast<Scalar2>();
+    new_cam.stereo_pairs = stereo_pairs;
 
     return new_cam;
   }
@@ -152,8 +153,8 @@ struct Calibration {
   /// accelerometer.
   Vec3 accel_bias_std;
 
-  /// @brief stereo pair, indexing the intrinsics index
-  std::vector<std::pair<int, int>> stereo_pairs;
+  /// @brief stereo pair, indexing the intrinsics index, allow one to multiple matching
+  std::vector<std::pair<uint16_t, std::vector<uint16_t>>> stereo_pairs;
 
   /// @brief Dicrete time gyroscope noise standard deviation.
   ///
