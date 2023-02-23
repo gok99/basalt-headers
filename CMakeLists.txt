@@ -68,6 +68,8 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   set(CMAKE_CXX_FLAGS_SANITIZERDEBUG "-O0 -g -DEIGEN_INITIALIZE_MATRICES_BY_NAN -fno-omit-frame-pointer -fsanitize=address,undefined")
   set(CMAKE_CXX_FLAGS_SANITIZERRELWITHDEBINFO "-O3 -g -DEIGEN_INITIALIZE_MATRICES_BY_NAN -fno-omit-frame-pointer -fsanitize=address,undefined")
 
+  message(STATUS "basalt headers: CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
+
 endif()
 
 function(report_dependency_location DEP_NAME DEP_TARGET)
