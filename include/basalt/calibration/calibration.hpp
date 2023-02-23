@@ -88,11 +88,16 @@ struct Calibration {
 
     new_cam.imu_update_rate = imu_update_rate;
 
+    new_cam.T_i_b = T_i_b.template cast<Scalar2>();
+
     new_cam.gyro_noise_std = gyro_noise_std.template cast<Scalar2>();
     new_cam.accel_noise_std = accel_noise_std.template cast<Scalar2>();
     new_cam.gyro_bias_std = gyro_bias_std.template cast<Scalar2>();
     new_cam.accel_bias_std = accel_bias_std.template cast<Scalar2>();
     new_cam.stereo_pairs = stereo_pairs;
+
+    new_cam.imu_name = imu_name;
+    new_cam.cam_names = cam_names;
 
     return new_cam;
   }
