@@ -88,8 +88,7 @@ struct Calibration {
 
     new_cam.imu_update_rate = imu_update_rate;
 
-    SE3 const& T_i_b_const = T_i_b; // force a copy?
-    new_cam.T_i_b = T_i_b_const.template cast<Scalar2>();
+    new_cam.T_i_b = T_i_b.template cast<Scalar2>();
 
     new_cam.gyro_noise_std = gyro_noise_std.template cast<Scalar2>();
     new_cam.accel_noise_std = accel_noise_std.template cast<Scalar2>();
