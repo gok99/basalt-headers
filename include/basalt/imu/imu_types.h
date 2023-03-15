@@ -267,6 +267,7 @@ struct ImuData {
   using Vec3 = Eigen::Matrix<Scalar, 3, 1>;
 
   int64_t t_ns;  ///< timestamp in nanoseconds
+  uint64_t seq;
   Vec3 accel;    ///< Accelerometer measurement
   Vec3 gyro;     ///< Gyroscope measurement
 
