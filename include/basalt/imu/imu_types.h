@@ -59,19 +59,20 @@ struct PoseState {
   using SE3 = Sophus::SE3<Scalar>;
 
   /// @brief Default constructor with Identity pose and zero timestamp.
-  PoseState() : t_ns(0), is_kf(0), connected_lm_with_previous_kf(0) {}
+  PoseState() : t_ns(0), t_ns_image(0), is_kf(0), connected_lm_with_previous_kf(0) {}
 
   /// @brief Constructor with timestamp and pose.
   ///
   /// @param t_ns timestamp of the state in nanoseconds
   /// @param T_w_i transformation from the body frame to the world frame
-  PoseState(int64_t t_ns, const SE3& T_w_i) : t_ns(t_ns), T_w_i(T_w_i), is_kf(0), connected_lm_with_previous_kf(0) {}
+  PoseState(int64_t t_ns, const SE3& T_w_i) : t_ns(t_ns), t_ns_image(0), T_w_i(T_w_i), is_kf(0), connected_lm_with_previous_kf(0) {}
 
   /// @brief Create copy with different Scalar type.
   template <class Scalar2>
   PoseState<Scalar2> cast() const {
     PoseState<Scalar2> a;
     a.t_ns = t_ns;
+    a.t_ns_image = t_ns_image;
     a.T_w_i = T_w_i.template cast<Scalar2>();
     a.is_kf = is_kf;
     a.connected_lm_with_previous_kf = connected_lm_with_previous_kf;
@@ -109,6 +110,7 @@ struct PoseState {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   int64_t t_ns;  ///< timestamp of the state in nanoseconds
+  int64_t t_ns_image;
   SE3 T_w_i;     ///< pose of the state
 
   // hm: add metadata about pose and connectivity
