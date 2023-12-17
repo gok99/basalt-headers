@@ -215,12 +215,12 @@ struct Image {
   // Reductions
   //////////////////////////////////////////////////////
 
-  template <typename BinaryOperation>
-  BASALT_HOST_DEVICE inline T Accumulate(const T init,
-                                         BinaryOperation binary_op) {
+  template <typename Tout, typename BinaryOperation>
+  BASALT_HOST_DEVICE inline Tout Accumulate(const T init,
+                                         BinaryOperation binary_op) const {
     BASALT_ASSERT(IsValid());
 
-    T val = init;
+    Tout val = init;
     for (size_t y = 0; y < h; ++y) {
       T* el = RowPtr(y);
       const T* el_end = el + w;
@@ -250,8 +250,8 @@ struct Image {
 
   template <typename Tout = T>
   Tout Sum() const {
-    return Accumulate((T)0,
-                      [](const T& lhs, const T& rhs) { return lhs + rhs; });
+    return Accumulate<Tout>((const T)0,
+                      [](const Tout& lhs, const T& rhs) { return lhs + rhs; });
   }
 
   template <typename Tout = T>
