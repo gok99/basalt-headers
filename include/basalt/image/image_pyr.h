@@ -229,14 +229,20 @@ class ImagePyr {
     setFromImage(src, dest, num_levels);
   }
 
+  inline ImagePyr(const Image<T>& src) {
+    image = src; // assume the src is the mipmap image
+    assert(src.w * 2 % 3 == 0);
+    orig_w = src.w * 2 / 3;
+  }
+
   /// @brief Set image pyramid from other image.
   ///
   /// @param src image to use for the pyramid level 0
   /// @param dest image to store to, with already allocated space
   /// @param num_level number of levels for the pyramid
   inline void setFromImage(const Image<T>& src, Image<T>& dest, size_t num_levels) {
-    orig_w = src.w;
-    image = dest;
+    orig_w = src.w; // assume src is the non-mipmap image
+    image = dest; // assume we already allocated sufficient space for mipmap
 
     lvl_internal(0).CopyFrom(src);
 
