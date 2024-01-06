@@ -331,9 +331,20 @@ inline void load(Archive& ar, basalt::RdSpline<DIM, ORDER, Scalar>& spline) {
   spline = new_spline;
 }
 
+template <class Archive>
+inline void serialize(Archive& ar, basalt::CalibrationStats& stats) {
+  ar(cereal::make_nvp("success", stats.success),
+     cereal::make_nvp("mean_reprojection_error", stats.mean_reprojection_error),
+     cereal::make_nvp("poses_rejection_ratio", stats.poses_rejection_ratio),
+     cereal::make_nvp("num_points", stats.num_points),
+     cereal::make_nvp("calibrated_fov", stats.calibrated_fov)
+  );
+}
+
 template <class Archive, class Scalar>
 inline void serialize(Archive& ar, basalt::Calibration<Scalar>& cam) {
-  ar(cereal::make_nvp("cam_names", cam.cam_names),
+  ar(cereal::make_nvp("calibration_stats", cam.calibration_stats),
+     cereal::make_nvp("cam_names", cam.cam_names),
      cereal::make_nvp("T_imu_body", cam.T_i_b),
      cereal::make_nvp("T_imu_cam", cam.T_i_c),
      cereal::make_nvp("intrinsics", cam.intrinsics),

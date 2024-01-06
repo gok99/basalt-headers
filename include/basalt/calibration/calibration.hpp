@@ -47,6 +47,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace basalt {
 
 /// @brief Struct to store camera-IMU calibration
+
+struct CalibrationStats {
+  bool success; // checking reprojection error etc
+  float mean_reprojection_error;
+  float poses_rejection_ratio;
+  int num_points;
+  std::vector<std::map<double, double>> calibrated_fov; // up to a certain reprojection error
+};
+
 template <class Scalar>
 struct Calibration {
   using Ptr = std::shared_ptr<Calibration>;
@@ -99,8 +108,12 @@ struct Calibration {
     new_cam.imu_name = imu_name;
     new_cam.cam_names = cam_names;
 
+    new_cam.calibration_stats = calibration_stats;
+
     return new_cam;
   }
+
+  CalibrationStats calibration_stats;
 
   // hm: give a string name for each camera
   std::vector<std::string> cam_names;
