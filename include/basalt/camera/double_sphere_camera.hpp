@@ -507,8 +507,8 @@ class DoubleSphereCamera {
   /// @param[in] init vector [fx, fy, cx, cy]
   inline void setFromInit(const Vec4& init) {
 
-    constexpr Scalar xi = -0.1;
-    constexpr Scalar alpha = 0.6;
+    constexpr Scalar xi = -0.2; // abit more negative helps the convergence for fisheye camera
+    constexpr Scalar alpha = 0.55;
 
     // hm: scale the focal length accordingly
     param_[0] = (Scalar(1) + xi) * init[0];
