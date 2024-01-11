@@ -146,6 +146,18 @@ class KannalaBrandtCamera18 {
     return is_valid;
   }
 
+  inline bool inBound(const Vec2& proj) const{
+    // TODO
+    if (proj[0] < 0 || proj[1] <  0) return false;
+    return true;
+  }
+
+  inline void makeInBound(Vec2& proj) const{
+
+      // Nothing
+
+  }
+
   /// @brief Unproject the point and optionally compute Jacobians
   ///
   /// @param[in] proj point to unproject

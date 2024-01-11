@@ -57,7 +57,6 @@ class DoubleSphereCamera {
  public:
   using Scalar = Scalar_;
   static constexpr int N = 6;  ///< Number of intrinsic parameters.
-  static constexpr Scalar alpha_offset = 0.09; // hm: to shrink the effective viewing angle of the lens, larger the greater the shrink
 
   using Vec2 = Eigen::Matrix<Scalar, 2, 1>;
   using Vec4 = Eigen::Matrix<Scalar, 4, 1>;
@@ -76,12 +75,64 @@ class DoubleSphereCamera {
   /// @brief Construct camera model with given vector of intrinsics
   ///
   /// @param[in] p vector of intrinsic parameters [fx, fy, cx, cy, xi, alpha]
-  explicit DoubleSphereCamera(const VecN& p) { param_ = p; }
+  explicit DoubleSphereCamera(const VecN& p, int fov = 200) { 
+    param_ = p; 
+
+    // fov_deg_ is determined by both user input and intrinsic value
+    fov_deg_ = fov;
+
+    // sweep through radial
+    int d = 0;
+    r2_max_ = Scalar(0);
+    for (; d <= fov_deg_ / 2; d++) {
+      // construct 3d point given the degree
+      Eigen::Matrix<Scalar, 3, 1> p3d;
+      p3d[0] = std::sin(Scalar(d) / Scalar(180 / M_PI));
+      p3d[1] = Scalar(0);
+      p3d[2] = std::cos(Scalar(d) / Scalar(180 / M_PI));
+
+      Vec2 p2d;
+
+      bool success = project(p3d, p2d);
+
+      if (!success)
+        break;
+
+      // update
+
+      const Scalar& fx = param_[0];
+      const Scalar& fy = param_[1];
+      const Scalar& cx = param_[2];
+      const Scalar& cy = param_[3];
+
+      const Scalar mx = (p2d[0] - cx) / fx;
+      const Scalar my = (p2d[1] - cy) / fy;
+
+      const Scalar r2 = mx * mx + my * my;
+
+      assert(r2 >= r2_max_); // no wrapping around should happen
+
+      r2_max_ = r2;
+      // std::cout << r2_max_ << " ";
+    }
+    // std::cout << std::endl;
+    assert(d > 0);
+
+    fov_deg_ = std::min(fov_deg_, (d-1)*2);
+
+    const Scalar& alpha = param_[5];
+    if (alpha > Scalar(0.5)) {
+      r2_max_ = std::min(r2_max_, Scalar(1) / (Scalar(2) * alpha - Scalar(1)) - std::numeric_limits<Scalar>::epsilon());
+    }
+
+    // std::cout << "fov_deg_ = " << fov_deg_ << ", r2_max_ = " << r2_max_ << "alpha limit " << Scalar(1) / (Scalar(2) * alpha - Scalar(1)) << std::endl;
+    
+  }
 
   /// @brief Cast to different scalar type
   template <class Scalar2>
   DoubleSphereCamera<Scalar2> cast() const {
-    return DoubleSphereCamera<Scalar2>(param_.template cast<Scalar2>());
+    return DoubleSphereCamera<Scalar2>(param_.template cast<Scalar2>(), fov_deg_);
   }
 
   /// @brief Camera model name
@@ -160,7 +211,9 @@ class DoubleSphereCamera {
     const Scalar w2 =
         (w1 + xi) / sqrt(Scalar(2) * w1 * xi + xi * xi + Scalar(1));
 
-    const bool is_valid = (z > -w2 * d1);
+    Scalar deg = std::atan2<Scalar, Scalar>(sqrt(r2), z) / Scalar(M_PI/180); // range 0~pi
+
+    const bool is_valid = (deg <= fov_deg_ / 2) && (z > -w2 * d1);
 
     const Scalar k = xi * d1 + z;
     const Scalar kk = k * k;
@@ -286,9 +339,11 @@ class DoubleSphereCamera {
 
     const Scalar r2 = mx * mx + my * my;
 
-    const bool is_valid =
-        !static_cast<bool>(alpha > Scalar(0.5) &&
-                           (r2 >= Scalar(1) / (Scalar(2) * alpha - Scalar(1))));
+    // std::cout  << "r2 " << r2 << ", r2_max_ " << r2_max_ << std::endl;
+
+    const bool is_valid = (r2 <= r2_max_); // &&
+        // !static_cast<bool>(alpha > Scalar(0.5) &&
+        //                    (r2 >= Scalar(1) / (Scalar(2) * alpha - Scalar(1))));
 
     const Scalar xi2_2 = alpha * alpha;
     const Scalar xi1_2 = xi * xi;
@@ -412,12 +467,36 @@ class DoubleSphereCamera {
 
     const Scalar r2 = mx * mx + my * my;
 
-    if (alpha > Scalar(0.5)) {
-      // hm: the bigger the apparent alpha > 0.5, the smaller the acceptable region of r^2
-      if (r2 >= Scalar(1) / (Scalar(2) * (alpha + alpha_offset) - Scalar(1))) return false;
-    }
+    if (r2 >= r2_max_)
+      return false;
+
+    // if (alpha > Scalar(0.5)) {
+    //   // hm: the bigger the apparent alpha > 0.5, the smaller the acceptable region of r^2
+    //   if (r2 >= Scalar(1) / (Scalar(2) * alpha - Scalar(1))) return false;
+    // }
 
     return true;
+  }
+
+  inline void makeInBound(Vec2& proj) const{
+
+    const Scalar& fx = param_[0];
+    const Scalar& fy = param_[1];
+    const Scalar& cx = param_[2];
+    const Scalar& cy = param_[3];
+
+    const Scalar mx = (proj[0] - cx) / fx;
+    const Scalar my = (proj[1] - cy) / fy;
+
+    const Scalar r2 = mx * mx + my * my;
+
+    if (r2 > r2_max_) {
+      Scalar ratio = sqrt(r2_max_ / r2) - std::numeric_limits<Scalar>::epsilon();
+
+      proj[0] = mx * ratio * fx + cx;
+      proj[1] = my * ratio * fy + cy;
+    }
+
   }
 
   /// @brief Set parameters from initialization
@@ -478,6 +557,8 @@ class DoubleSphereCamera {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
  private:
   VecN param_;
+  int fov_deg_;
+  Scalar r2_max_;
 };
 
 }  // namespace basalt

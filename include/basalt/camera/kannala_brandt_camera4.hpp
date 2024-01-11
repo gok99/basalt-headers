@@ -83,7 +83,35 @@ class KannalaBrandtCamera4 {
   ///
   /// @param[in] p vector of intrinsic parameters [fx, fy, cx, cy, k1, k2, k3,
   /// k4]
-  explicit KannalaBrandtCamera4(const VecN& p) { param_ = p; }
+  explicit KannalaBrandtCamera4(const VecN& p, int fov = 200) { 
+    param_ = p; 
+    fov_deg_ = fov;
+
+    // calculate r_max
+    Eigen::Matrix<Scalar, 3, 1> p3d;
+    p3d[0] = std::sin(Scalar(fov_deg_/2) / Scalar(180 / M_PI));
+    p3d[1] = Scalar(0);
+    p3d[2] = std::cos(Scalar(fov_deg_/2) / Scalar(180 / M_PI));
+
+    Vec2 p2d;
+
+    bool success = project(p3d, p2d);
+
+    assert(success);
+
+    // update
+
+    const Scalar& fx = param_[0];
+    const Scalar& fy = param_[1];
+    const Scalar& cx = param_[2];
+    const Scalar& cy = param_[3];
+
+    const Scalar mx = (p2d[0] - cx) / fx;
+    const Scalar my = (p2d[1] - cy) / fy;
+
+    r2_max_ = mx * mx + my * my;
+
+  }
 
   /// @brief Camera model name
   ///
@@ -93,7 +121,7 @@ class KannalaBrandtCamera4 {
   /// @brief Cast to different scalar type
   template <class Scalar2>
   KannalaBrandtCamera4<Scalar2> cast() const {
-    return KannalaBrandtCamera4<Scalar2>(param_.template cast<Scalar2>());
+    return KannalaBrandtCamera4<Scalar2>(param_.template cast<Scalar2>(), fov_deg_);
   }
 
   /// @brief Project the point and optionally compute Jacobians
@@ -156,6 +184,11 @@ class KannalaBrandtCamera4 {
     if (r > Sophus::Constants<Scalar>::epsilonSqrt()) {
       const Scalar theta = atan2(r, z);
       const Scalar theta2 = theta * theta;
+
+      // check for validity
+
+      Scalar deg = theta / Scalar(M_PI/180);
+      is_valid = (deg <= fov_deg_ / 2);
 
       Scalar r_theta = k4 * theta2;
       r_theta += k3;
@@ -279,9 +312,30 @@ class KannalaBrandtCamera4 {
 
 
 inline bool inBound(const Vec2& proj) const{
-  // TODO
-  if (proj[0] < 0 || proj[1] <  0) return false;
+  // TODO, check for fov potentially
+  // if (proj[0] < 0 || proj[1] <  0) return false;
   return true;
+}
+
+inline void makeInBound(Vec2& proj) const{
+
+    const Scalar& fx = param_[0];
+    const Scalar& fy = param_[1];
+    const Scalar& cx = param_[2];
+    const Scalar& cy = param_[3];
+
+    const Scalar mx = (proj[0] - cx) / fx;
+    const Scalar my = (proj[1] - cy) / fy;
+
+    const Scalar r2 = mx * mx + my * my;
+
+    if (r2 > r2_max_) {
+      Scalar ratio = sqrt(r2_max_ / r2) - std::numeric_limits<Scalar>::epsilon();
+
+      proj[0] = mx * ratio * fx + cx;
+      proj[1] = my * ratio * fy + cy;
+    }
+
 }
 
   /// @brief solve for theta using Newton's method.
@@ -378,12 +432,17 @@ inline bool inBound(const Vec2& proj) const{
     const Scalar mx = (proj_eval[0] - cx) / fx;
     const Scalar my = (proj_eval[1] - cy) / fy;
 
+    bool is_valid = true;
+
     Scalar theta(0);
     Scalar sin_theta(0);
     Scalar cos_theta(1);
-    Scalar thetad = sqrt(mx * mx + my * my);
+    Scalar r2 = mx * mx + my * my;
+    Scalar thetad = sqrt(r2);
     Scalar scaling(1);
     Scalar d_func_d_theta(0);
+
+    is_valid = r2 <= r2_max_;
 
     if (thetad > Sophus::Constants<Scalar>::epsilonSqrt()) {
       theta = solveTheta<3>(thetad, d_func_d_theta);
@@ -486,7 +545,7 @@ inline bool inBound(const Vec2& proj) const{
       UNUSED(d_p3d_d_param);
     }
 
-    return true;
+    return is_valid;
   }
 
   /// @brief Increment intrinsic parameters by inc
@@ -540,6 +599,8 @@ inline bool inBound(const Vec2& proj) const{
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
  private:
   VecN param_;
+  int fov_deg_;
+  Scalar r2_max_;
 };
 
 }  // namespace basalt

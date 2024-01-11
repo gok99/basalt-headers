@@ -504,6 +504,18 @@ class PinholeRadtan8Camera {
     return is_valid;
   }
 
+inline bool inBound(const Vec2& proj) const{
+  // TODO
+  if (proj[0] < 0 || proj[1] <  0) return false;
+  return true;
+}
+
+inline void makeInBound(Vec2& proj) const{
+
+    // Nothing
+
+}
+
   /// @brief Distorts a normalized 2D point
   ///
   /// Given \f$ (x', y') \f$ computes \f$ (x'', y'') \f$ as defined in

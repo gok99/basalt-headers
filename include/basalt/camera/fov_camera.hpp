@@ -386,6 +386,12 @@ class FovCamera {
     return true;
   }
 
+  inline void makeInBound(Vec2& proj) const{
+
+    // Nothing
+
+  }
+
   /// @brief Set parameters from initialization
   ///
   /// Initializes the camera model to  \f$ \left[f_x, f_y, c_x, c_y, 1

@@ -239,6 +239,12 @@ class GenericCamera {
     return res;
   }
 
+  inline void makeInBound(Vec2& proj) const{
+    std::visit(
+        [&](const auto& cam) { cam.makeInBound(proj); },
+        variant);
+  }
+
   /// @brief Project a vector of points
   ///
   /// @param[in] p3d points to project
