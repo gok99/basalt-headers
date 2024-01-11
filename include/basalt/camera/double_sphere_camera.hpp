@@ -467,7 +467,7 @@ class DoubleSphereCamera {
 
     const Scalar r2 = mx * mx + my * my;
 
-    if (r2 >= r2_max_)
+    if (r2 > r2_max_)
       return false;
 
     // if (alpha > Scalar(0.5)) {
@@ -491,7 +491,7 @@ class DoubleSphereCamera {
     const Scalar r2 = mx * mx + my * my;
 
     if (r2 > r2_max_) {
-      Scalar ratio = sqrt(r2_max_ / r2) - std::numeric_limits<Scalar>::epsilon();
+      Scalar ratio = sqrt(r2_max_ / r2) * Scalar(1.0 - 1e-4);
 
       proj[0] = mx * ratio * fx + cx;
       proj[1] = my * ratio * fy + cy;
