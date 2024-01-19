@@ -83,7 +83,7 @@ class KannalaBrandtCamera4 {
   ///
   /// @param[in] p vector of intrinsic parameters [fx, fy, cx, cy, k1, k2, k3,
   /// k4]
-  explicit KannalaBrandtCamera4(const VecN& p, int fov = 200) { 
+  explicit KannalaBrandtCamera4(const VecN& p, int fov = 200, int width = 0, int height = 0) { 
     param_ = p; 
     fov_deg_ = fov;
 
@@ -96,8 +96,11 @@ class KannalaBrandtCamera4 {
     Vec2 p2d;
 
     bool success = project(p3d, p2d);
-
     assert(success);
+
+    // initialise after the p2d, to skip image bound check
+    width_ = width;
+    height_ = height;
 
     // update
 
@@ -190,6 +193,10 @@ class KannalaBrandtCamera4 {
       Scalar deg = theta / Scalar(M_PI/180);
       is_valid = (deg <= fov_deg_ / 2);
 
+      // fov check
+      if (!is_valid)
+        return false;
+
       Scalar r_theta = k4 * theta2;
       r_theta += k3;
       r_theta *= theta2;
@@ -205,6 +212,9 @@ class KannalaBrandtCamera4 {
 
       proj[0] = fx * mx + cx;
       proj[1] = fy * my + cy;
+
+      if(!inBound(proj))
+        return false;
 
       if constexpr (!std::is_same_v<DerivedJ3D, std::nullptr_t>) {
         BASALT_ASSERT(d_proj_d_p3d);
@@ -276,8 +286,15 @@ class KannalaBrandtCamera4 {
         is_valid = false;
       }
 
+      // fov check
+      if(!is_valid)
+        return false;
+
       proj[0] = fx * x / z + cx;
       proj[1] = fy * y / z + cy;
+
+      if(!inBound(proj))
+        return false;
 
       if constexpr (!std::is_same_v<DerivedJ3D, std::nullptr_t>) {
         BASALT_ASSERT(d_proj_d_p3d);
@@ -307,13 +324,19 @@ class KannalaBrandtCamera4 {
       }
     }
 
-    return is_valid;
+    return true;
   }
 
 
 inline bool inBound(const Vec2& proj) const{
-  // TODO, check for fov potentially
-  // if (proj[0] < 0 || proj[1] <  0) return false;
+  
+  if (width_ > 0 && height_ > 0) {
+    if (proj[0] < 0 || proj[1] < 0)
+      return false;
+    if (proj[0] > width_ || proj[1] > height_)
+      return false;
+  }
+
   return true;
 }
 
@@ -599,6 +622,7 @@ inline void makeInBound(Vec2& proj) const{
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
  private:
   VecN param_;
+  int width_, height_;
   int fov_deg_;
   Scalar r2_max_;
 };

@@ -74,7 +74,11 @@ class PinholeCamera {
   /// @brief Construct camera model with given vector of intrinsics
   ///
   /// @param[in] p vector of intrinsic parameters [fx, fy, cx, cy]
-  explicit PinholeCamera(const VecN& p) { param_ = p; }
+  explicit PinholeCamera(const VecN& p, int width = 0, int height = 0) { 
+    param_ = p;
+    width_ = width;
+    height_ = height;
+  }
 
   /// @brief Cast to different scalar type
   template <class Scalar2>
@@ -139,6 +143,14 @@ class PinholeCamera {
     proj[1] = fy * y / z + cy;
 
     const bool is_valid = z >= Sophus::Constants<Scalar>::epsilonSqrt();
+
+    // 180 fov check
+    if(!is_valid)
+      return false;
+
+    // image size check
+    if(!inBound(proj))
+      return false;
 
     if constexpr (!std::is_same_v<DerivedJ3D, std::nullptr_t>) {
       BASALT_ASSERT(d_proj_d_p3d);
@@ -264,15 +276,21 @@ class PinholeCamera {
   }
 
   inline bool inBound(const Vec2& proj) const{
-    // TODO
 
-    if (proj[0] < 0 || proj[1] <  0) return false;
+    if (width_ > 0 && height_ > 0) {
+      if (proj[0] < 0 || proj[1] < 0)
+        return false;
+
+      if (proj[0] > width_ || proj[1] > height_)
+        return false;
+    }
     return true;
   }
 
   inline void makeInBound(Vec2& proj) const{
 
     // Nothing
+    throw std::runtime_error("not implemented makeInBound for pinhole, should not be needed");
 
   }
 
@@ -339,6 +357,7 @@ class PinholeCamera {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
  private:
   VecN param_;
+  int width_, height_;
 };
 
 }  // namespace basalt

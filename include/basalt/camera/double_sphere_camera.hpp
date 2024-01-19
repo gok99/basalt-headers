@@ -75,7 +75,7 @@ class DoubleSphereCamera {
   /// @brief Construct camera model with given vector of intrinsics
   ///
   /// @param[in] p vector of intrinsic parameters [fx, fy, cx, cy, xi, alpha]
-  explicit DoubleSphereCamera(const VecN& p, int fov = 200) { 
+  explicit DoubleSphereCamera(const VecN& p, int fov = 200, int width = 0, int height = 0) { 
     param_ = p; 
 
     // fov_deg_ is determined by both user input and intrinsic value
@@ -119,6 +119,9 @@ class DoubleSphereCamera {
     assert(d > 0);
 
     fov_deg_ = std::min(fov_deg_, (d-1)*2);
+    width_ = width;
+    height_ = height;
+
 
     const Scalar& alpha = param_[5];
     if (alpha > Scalar(0.5)) {
@@ -213,7 +216,11 @@ class DoubleSphereCamera {
 
     Scalar deg = std::atan2<Scalar, Scalar>(sqrt(r2), z) / Scalar(M_PI/180); // range 0~pi
 
-    const bool is_valid = (deg <= fov_deg_ / 2) && (z > -w2 * d1);
+    bool is_valid = (deg <= fov_deg_ / 2) && (z > -w2 * d1);
+
+    // fov invalid
+    if (!is_valid)
+      return false;
 
     const Scalar k = xi * d1 + z;
     const Scalar kk = k * k;
@@ -228,6 +235,10 @@ class DoubleSphereCamera {
 
     proj[0] = fx * mx + cx;
     proj[1] = fy * my + cy;
+
+    // image size invalid
+    if(!inBound(proj))
+      return false;
 
     if constexpr (!std::is_same_v<DerivedJ3D, std::nullptr_t>) {
       BASALT_ASSERT(d_proj_d_p3d);
@@ -279,7 +290,7 @@ class DoubleSphereCamera {
       UNUSED(d_proj_d_param);
     }
 
-    return is_valid;
+    return true;
   }
 
   /// @brief Unproject the point and optionally compute Jacobians
@@ -467,8 +478,17 @@ class DoubleSphereCamera {
 
     const Scalar r2 = mx * mx + my * my;
 
+    // fov check
     if (r2 > r2_max_)
       return false;
+
+    // image size check
+    if (width_ > 0 && height_ > 0) {
+      if (proj[0] < 0 || proj[1] < 0)
+        return false;
+      if (proj[0] > width_ && proj[1] > height_)
+        return false;
+    }
 
     // if (alpha > Scalar(0.5)) {
     //   // hm: the bigger the apparent alpha > 0.5, the smaller the acceptable region of r^2
@@ -557,6 +577,7 @@ class DoubleSphereCamera {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
  private:
   VecN param_;
+  int width_, height_; // for bound checking only
   int fov_deg_;
   Scalar r2_max_;
 };
