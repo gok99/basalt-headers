@@ -83,7 +83,8 @@ class DoubleSphereCamera {
 
     // sweep through radial
     int d = 0;
-    r2_max_ = Scalar(0);
+    r2_max_ = Scalar(1e10); // put to max first
+    Scalar r2_max = Scalar(0);
     for (; d <= fov_deg_ / 2; d++) {
       // construct 3d point given the degree
       Eigen::Matrix<Scalar, 3, 1> p3d;
@@ -110,14 +111,16 @@ class DoubleSphereCamera {
 
       const Scalar r2 = mx * mx + my * my;
 
-      assert(r2 >= r2_max_); // no wrapping around should happen
+      assert(r2 >= r2_max); // no wrapping around should happen
 
-      r2_max_ = r2;
-      // std::cout << r2_max_ << " ";
+      r2_max = r2;
+      // std::cout << r2_max << " ";
     }
-    // std::cout << std::endl;
+    // std::cout << "r2_max" << std::endl;
     assert(d > 0);
+    assert(r2_max > 0);
 
+    r2_max_ = r2_max;
     fov_deg_ = std::min(fov_deg_, (d-1)*2);
     width_ = width;
     height_ = height;
