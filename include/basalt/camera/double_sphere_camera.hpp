@@ -75,7 +75,7 @@ class DoubleSphereCamera {
   /// @brief Construct camera model with given vector of intrinsics
   ///
   /// @param[in] p vector of intrinsic parameters [fx, fy, cx, cy, xi, alpha]
-  explicit DoubleSphereCamera(const VecN& p, int fov = 200, int width = 0, int height = 0) { 
+  explicit DoubleSphereCamera(const VecN& p, int fov = 200, int width = 0, int height = 0) : width_(0), height_(0) { 
     param_ = p; 
 
     // fov_deg_ is determined by both user input and intrinsic value
@@ -219,7 +219,7 @@ class DoubleSphereCamera {
 
     Scalar deg = std::atan2<Scalar, Scalar>(sqrt(r2), z) / Scalar(M_PI/180); // range 0~pi
 
-    bool is_valid = (deg <= fov_deg_ / 2) && (z > -w2 * d1);
+    bool is_valid = (deg <= fov_deg_ / 2) && (z > -w2 * d1 + Scalar(1e-7));
 
     // fov invalid
     if (!is_valid)
@@ -232,6 +232,10 @@ class DoubleSphereCamera {
     const Scalar d2 = sqrt(d2_2);
 
     const Scalar norm = alpha * d2 + (Scalar(1) - alpha) * k;
+
+    // for valid projection, norm is always greater
+    if(norm < Sophus::Constants<Scalar>::epsilonSqrt())
+      return false;
 
     const Scalar mx = x / norm;
     const Scalar my = y / norm;
@@ -266,6 +270,10 @@ class DoubleSphereCamera {
 
       (*d_proj_d_p3d)(0, 2) = -fx * x * tmp2;
       (*d_proj_d_p3d)(1, 2) = -fy * y * tmp2;
+
+      // BASALT_ASSERT(d2 > Scalar(0));
+      if (!(*d_proj_d_p3d).array().isFinite().all())
+        return false;
     } else {
       UNUSED(d_proj_d_p3d);
     }
@@ -289,6 +297,10 @@ class DoubleSphereCamera {
 
       (*d_proj_d_param)(0, 5) = fx * x * tmp5;
       (*d_proj_d_param)(1, 5) = fy * y * tmp5;
+
+      if (!(*d_proj_d_param).array().isFinite().all())
+        return false;
+
     } else {
       UNUSED(d_proj_d_param);
     }
@@ -366,11 +378,13 @@ class DoubleSphereCamera {
 
     const Scalar norm2 = alpha * sqrt2 + Scalar(1) - alpha;
 
+    BASALT_ASSERT(norm2 > Sophus::Constants<Scalar>::epsilonSqrt());
     const Scalar mz = (Scalar(1) - xi2_2 * r2) / norm2;
     const Scalar mz2 = mz * mz;
 
     const Scalar norm1 = mz2 + r2;
     const Scalar sqrt1 = sqrt(mz2 + (Scalar(1) - xi1_2) * r2);
+    BASALT_ASSERT(norm1 > Sophus::Constants<Scalar>::epsilonSqrt());
     const Scalar k = (mz * xi + sqrt1) / norm1;
 
     p3d.setZero();
@@ -425,6 +439,9 @@ class DoubleSphereCamera {
         BASALT_ASSERT(d_p3d_d_proj);
         d_p3d_d_proj->col(0) = c0;
         d_p3d_d_proj->col(1) = c1;
+        if (!(*d_p3d_d_proj).array().isFinite().all())
+          return false;
+        
       } else {
         UNUSED(d_p3d_d_proj);
       }
@@ -455,6 +472,10 @@ class DoubleSphereCamera {
         (*d_p3d_d_param)(0, 5) = mx * d_k_d_xi2;
         (*d_p3d_d_param)(1, 5) = my * d_k_d_xi2;
         (*d_p3d_d_param)(2, 5) = mz * d_k_d_xi2 + k * d_mz_d_xi2;
+
+        if (!(*d_p3d_d_param).array().isFinite().all())
+          return false;
+
       } else {
         UNUSED(d_p3d_d_param);
         UNUSED(d_k_d_mz);
@@ -474,7 +495,7 @@ class DoubleSphereCamera {
     const Scalar& cx = param_[2];
     const Scalar& cy = param_[3];
 
-    const Scalar& alpha = param_[5];
+    // const Scalar& alpha = param_[5];
 
     const Scalar mx = (proj[0] - cx) / fx;
     const Scalar my = (proj[1] - cy) / fy;

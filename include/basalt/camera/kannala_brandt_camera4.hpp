@@ -83,7 +83,7 @@ class KannalaBrandtCamera4 {
   ///
   /// @param[in] p vector of intrinsic parameters [fx, fy, cx, cy, k1, k2, k3,
   /// k4]
-  explicit KannalaBrandtCamera4(const VecN& p, int fov = 200, int width = 0, int height = 0) { 
+  explicit KannalaBrandtCamera4(const VecN& p, int fov = 200, int width = 0, int height = 0) : width_(0), height_(0) { 
     param_ = p; 
     fov_deg_ = fov;
 
@@ -258,6 +258,10 @@ class KannalaBrandtCamera4 {
 
         (*d_proj_d_p3d)(0, 2) = fx * x * d_r_theta_d_theta * d_theta_d_z / r;
         (*d_proj_d_p3d)(1, 2) = fy * y * d_r_theta_d_theta * d_theta_d_z / r;
+
+        if (!(*d_proj_d_p3d).array().isFinite().all())
+          return false;
+
       } else {
         UNUSED(d_proj_d_p3d);
       }
@@ -276,6 +280,9 @@ class KannalaBrandtCamera4 {
         d_proj_d_param->col(5) = d_proj_d_param->col(4) * theta2;
         d_proj_d_param->col(6) = d_proj_d_param->col(5) * theta2;
         d_proj_d_param->col(7) = d_proj_d_param->col(6) * theta2;
+
+        if (!(*d_proj_d_param).array().isFinite().all())
+          return false;
       } else {
         UNUSED(d_proj_d_param);
       }
@@ -307,6 +314,10 @@ class KannalaBrandtCamera4 {
 
         (*d_proj_d_p3d)(1, 1) = fy / z;
         (*d_proj_d_p3d)(1, 2) = -fy * y / z2;
+
+        if (!(*d_proj_d_p3d).array().isFinite().all())
+          return false;
+
       } else {
         UNUSED(d_proj_d_p3d);
       }
@@ -319,6 +330,11 @@ class KannalaBrandtCamera4 {
         (*d_proj_d_param)(0, 2) = Scalar(1);
         (*d_proj_d_param)(1, 1) = y / z;
         (*d_proj_d_param)(1, 3) = Scalar(1);
+
+        if (!(*d_proj_d_param).array().isFinite().all())
+          return false;
+
+        
       } else {
         UNUSED(d_proj_d_param);
       }
@@ -537,6 +553,10 @@ inline void makeInBound(Vec2& proj) const{
         BASALT_ASSERT(d_p3d_d_proj);
         d_p3d_d_proj->col(0) = c0;
         d_p3d_d_proj->col(1) = c1;
+
+        if (!(*d_p3d_d_proj).array().isFinite().all())
+          return false;
+
       } else {
         UNUSED(d_p3d_d_proj);
       }
@@ -558,6 +578,9 @@ inline void makeInBound(Vec2& proj) const{
         d_p3d_d_param->col(5) = d_p3d_d_param->col(4) * theta2;
         d_p3d_d_param->col(6) = d_p3d_d_param->col(5) * theta2;
         d_p3d_d_param->col(7) = d_p3d_d_param->col(6) * theta2;
+
+        if (!(*d_p3d_d_param).array().isFinite().all())
+          return false;
       } else {
         UNUSED(d_p3d_d_param);
         UNUSED(d_scaling_d_k1);

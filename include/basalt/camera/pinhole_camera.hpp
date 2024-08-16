@@ -163,6 +163,8 @@ class PinholeCamera {
 
       (*d_proj_d_p3d)(1, 1) = fy / z;
       (*d_proj_d_p3d)(1, 2) = -fy * y / z2;
+
+      BASALT_ASSERT((*d_proj_d_p3d).array().isFinite().all());
     } else {
       UNUSED(d_proj_d_p3d);
     }
@@ -174,6 +176,7 @@ class PinholeCamera {
       (*d_proj_d_param)(0, 2) = Scalar(1);
       (*d_proj_d_param)(1, 1) = y / z;
       (*d_proj_d_param)(1, 3) = Scalar(1);
+      BASALT_ASSERT((*d_proj_d_param).array().isFinite().all());
     } else {
       UNUSED(d_proj_d_param);
     }
