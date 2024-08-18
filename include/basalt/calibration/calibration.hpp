@@ -54,6 +54,9 @@ struct CalibrationStats {
   float poses_rejection_ratio;
   int num_points;
   std::vector<std::map<double, double>> calibrated_fov; // up to a certain reprojection error
+  std::vector<std::vector<double>> calibrated_model_hfov;
+  std::vector<std::vector<double>> calibrated_model_vfov;
+  std::vector<std::vector<double>> calibrated_model_dfov;
 };
 
 template <class Scalar>

@@ -139,7 +139,7 @@ class PinholeRadtan8Camera {
     const Scalar MIN_REL_STEP{0.0001};  // GA minimum step (relative) size
     const Scalar NUDGE{0.1};  // Image center offset for the GA first guess
     const Scalar CORNER_BOUND_SCALE{1.5};  // Divergence bounds scaler
-    const Scalar RPMAX_SCALE{0.85};  // Shrink the resulting circle to be safe
+    const Scalar RPMAX_SCALE{0.98};  // Shrink the resulting circle to be safe
 
     const Scalar& fx = param_[0];
     const Scalar& fy = param_[1];
@@ -222,12 +222,25 @@ class PinholeRadtan8Camera {
     Vec2 x = guess;
     Scalar rpp2_x = rpp2(x);
     bool diverged = false;
+    Scalar step_size = STEP_SIZE;
     for (int i = 1; i < MAX_ITERS; i++) {
-      x += STEP_SIZE * numeric_rpp2_jacobian(x);
+
+      Vec2 x_propose = x + step_size * numeric_rpp2_jacobian(x);
+
+      // should not regress in projection.
+      if (x_propose.norm() < x.norm()) {
+        if (i > MAX_ITERS /4 )
+          step_size /= Scalar(2);
+        continue;
+      }
+      
+      x = x_propose;
+      // std::cout << "x norm = " << x.norm() << std::endl;
 
       const Scalar rp2_x = x.squaredNorm();
       if (rp2_x > domain_bound) {
         diverged = true;
+        // std::cout << "diverged beyond " << domain_bound << std::endl;
         break;
       }
 
@@ -241,6 +254,7 @@ class PinholeRadtan8Camera {
     // Finally, this is our rpmax estimate
     const Scalar rpmax = diverged ? S0 : RPMAX_SCALE * x.norm();
 
+    // std::cout << "final rpmax = " << rpmax << std::endl;
     rpmax_ = rpmax_backup;
     return rpmax;
   }
@@ -512,8 +526,16 @@ inline bool inBound(const Vec2& proj) const{
 
 inline void makeInBound(Vec2& proj) const{
 
-    // Nothing
+    Vec3 p3d;
+    unproject(proj, p3d);
 
+    Scalar xp = p3d[0] / p3d[2];
+    Scalar yp = p3d[1] / p3d[2];
+
+    Scalar scale = std::sqrt((xp*xp + yp*yp) / rpmax_ * rpmax_) - Sophus::Constants<Scalar>::epsilonSqrt();
+    BASALT_ASSERT(scale > 0);
+
+    proj /= scale;
 }
 
   /// @brief Distorts a normalized 2D point
@@ -715,7 +737,7 @@ inline void makeInBound(Vec2& proj) const{
     param_[1] = init[1];
     param_[2] = init[2];
     param_[3] = init[3];
-    rpmax_ = S0;  // No distortion, so biyective
+    rpmax_ = computeRpmax();
   }
 
   inline void scaleParam(double scale) {
@@ -723,6 +745,7 @@ inline void makeInBound(Vec2& proj) const{
     param_[1] *= scale;
     param_[2] *= scale;
     param_[3] *= scale;
+    rpmax_ = computeRpmax();
   }
 
   /// @brief Increment intrinsic parameters by inc

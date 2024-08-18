@@ -77,7 +77,7 @@ class KannalaBrandtCamera4 {
   using Mat4N = Eigen::Matrix<Scalar, 4, N>;
 
   /// @brief Default constructor with zero intrinsics
-  KannalaBrandtCamera4() { param_.setZero(); }
+  KannalaBrandtCamera4() : width_(0), height_(0) { param_.setZero(); }
 
   /// @brief Construct camera model with given vector of intrinsics
   ///
