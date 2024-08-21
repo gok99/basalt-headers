@@ -105,8 +105,8 @@ class GenericCamera {
   /// @brief Set parameters from initialization
   ///
   /// @param[in] init vector [fx, fy, cx, cy]
-  inline void setFromInit(const Vec4& init) {
-    std::visit([&](auto& v) { return v.setFromInit(init); }, variant);
+  inline void setFromInit(const Vec4& init, const VecX* ks = nullptr) {
+    std::visit([&](auto& v) { return v.setFromInit(init, ks); }, variant);
   }
 
   /// @brief Scale the intrinsic parameters, due to image resize in most cases

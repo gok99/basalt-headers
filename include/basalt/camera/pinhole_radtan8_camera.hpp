@@ -76,6 +76,7 @@ class PinholeRadtan8Camera {
   using Vec4 = Eigen::Matrix<Scalar, 4, 1>;
 
   using VecN = Eigen::Matrix<Scalar, N, 1>;
+  using VecX = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
 
   using Mat22 = Eigen::Matrix<Scalar, 2, 2>;
   using Mat24 = Eigen::Matrix<Scalar, 2, 4>;
@@ -731,12 +732,18 @@ inline void makeInBound(Vec2& proj) const{
   /// Initializes the camera model to  \f$ \left[
   /// f_x, f_y, c_x, c_y, 0, 0, 0, 0, 0, 0, 0, 0 \right]^T \f$
   /// @param[in] init vector [f_x, f_y, c_x, c_y]
-  inline void setFromInit(const Vec4& init) {
+  inline void setFromInit(const Vec4& init, const VecX* ks) {
     param_.setZero();
     param_[0] = init[0];
     param_[1] = init[1];
     param_[2] = init[2];
     param_[3] = init[3];
+
+    if (ks) {
+      for (size_t j = 4; j < N; ++j)
+        param_[j] = (*ks)(j - 4);
+    }
+
     rpmax_ = computeRpmax();
   }
 

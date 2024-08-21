@@ -62,6 +62,7 @@ class DoubleSphereCamera {
   using Vec4 = Eigen::Matrix<Scalar, 4, 1>;
 
   using VecN = Eigen::Matrix<Scalar, N, 1>;
+  using VecX = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
 
   using Mat24 = Eigen::Matrix<Scalar, 2, 4>;
   using Mat2N = Eigen::Matrix<Scalar, 2, N>;
@@ -70,69 +71,17 @@ class DoubleSphereCamera {
   using Mat4N = Eigen::Matrix<Scalar, 4, N>;
 
   /// @brief Default constructor with zero intrinsics
-  DoubleSphereCamera() : width_(0), height_(0) { param_.setZero(); }
+  DoubleSphereCamera() : width_(0), height_(0), fov_deg_(220) { param_.setZero(); }
 
   /// @brief Construct camera model with given vector of intrinsics
   ///
   /// @param[in] p vector of intrinsic parameters [fx, fy, cx, cy, xi, alpha]
-  explicit DoubleSphereCamera(const VecN& p, int fov = 200, int width = 0, int height = 0) : width_(0), height_(0) { 
-    param_ = p; 
+  explicit DoubleSphereCamera(const VecN& p, int fov = 220, int width = 0, int height = 0) 
+    : param_(p), fov_deg_(fov),  width_(width), height_(height) {
 
-    // fov_deg_ is determined by both user input and intrinsic value
-    fov_deg_ = fov;
-
-    // sweep through radial
-    int d = 0;
-    r2_max_ = Scalar(1e10); // put to max first
-    Scalar r2_max = Scalar(0);
-    for (; d <= fov_deg_ / 2; d++) {
-      // construct 3d point given the degree
-      Eigen::Matrix<Scalar, 3, 1> p3d;
-      p3d[0] = std::sin(Scalar(d) / Scalar(180 / M_PI));
-      p3d[1] = Scalar(0);
-      p3d[2] = std::cos(Scalar(d) / Scalar(180 / M_PI));
-
-      Vec2 p2d;
-
-      bool success = project(p3d, p2d);
-
-      if (!success)
-        break;
-
-      // update
-
-      const Scalar& fx = param_[0];
-      const Scalar& fy = param_[1];
-      const Scalar& cx = param_[2];
-      const Scalar& cy = param_[3];
-
-      const Scalar mx = (p2d[0] - cx) / fx;
-      const Scalar my = (p2d[1] - cy) / fy;
-
-      const Scalar r2 = mx * mx + my * my;
-
-      assert(r2 >= r2_max); // no wrapping around should happen
-
-      r2_max = r2;
-      // std::cout << r2_max << " ";
-    }
-    // std::cout << "r2_max" << std::endl;
-    assert(d > 0);
-    assert(r2_max > 0);
-
-    r2_max_ = r2_max;
-    fov_deg_ = std::min(fov_deg_, (d-1)*2);
-    width_ = width;
-    height_ = height;
-
-
-    const Scalar& alpha = param_[5];
-    if (alpha > Scalar(0.5)) {
-      r2_max_ = std::min(r2_max_, Scalar(1) / (Scalar(2) * alpha - Scalar(1)) - std::numeric_limits<Scalar>::epsilon());
-    }
+    updateR2max();
 
     // std::cout << "fov_deg_ = " << fov_deg_ << ", r2_max_ = " << r2_max_ << "alpha limit " << Scalar(1) / (Scalar(2) * alpha - Scalar(1)) << std::endl;
-    
   }
 
   /// @brief Cast to different scalar type
@@ -549,18 +498,27 @@ class DoubleSphereCamera {
   /// \right]^T \f$
   ///
   /// @param[in] init vector [fx, fy, cx, cy]
-  inline void setFromInit(const Vec4& init) {
+  inline void setFromInit(const Vec4& init, const VecX* ks) {
 
-    constexpr Scalar xi = -0.2; // abit more negative helps the convergence for fisheye camera
-    constexpr Scalar alpha = 0.55;
+    if (!ks)
+    {
+      // roughly fisheye
+      param_[4] = -0.2; // xi
+      param_[5] = 0.55; // alpha
+    }else {
+      param_[4] = (*ks)(0);
+      param_[5] = (*ks)(1);
+    }
 
     // hm: scale the focal length accordingly
-    param_[0] = (Scalar(1) + xi) * init[0];
-    param_[1] = (Scalar(1) + xi) * init[1];
+    param_[0] = (Scalar(1) + param_[4]) * init[0];
+    param_[1] = (Scalar(1) + param_[4]) * init[1];
     param_[2] = init[2];
     param_[3] = init[3];
-    param_[4] = xi;
-    param_[5] = alpha;
+
+
+    
+    updateR2max();
   }
 
   inline void scaleParam(double scale) {
@@ -568,6 +526,7 @@ class DoubleSphereCamera {
     param_[1] *= scale;
     param_[2] *= scale;
     param_[3] *= scale;
+    updateR2max();
   }
 
   /// @brief Increment intrinsic parameters by inc and clamp the values to the
@@ -576,8 +535,9 @@ class DoubleSphereCamera {
   /// @param[in] inc increment vector
   void operator+=(const VecN& inc) {
     param_ += inc;
-    param_[4] = std::clamp(param_[4], Scalar(-1), Scalar(1));
-    param_[5] = std::clamp(param_[5], Scalar(0), Scalar(1));
+    param_[4] = std::clamp(param_[4], Scalar(-1), Scalar(1)); // xi
+    param_[5] = std::clamp(param_[5], Sophus::Constants<Scalar>::epsilonSqrt(), Scalar(1) - Sophus::Constants<Scalar>::epsilonSqrt()); // alpha
+    updateR2max();
   }
 
   /// @brief Returns a const reference to the intrinsic parameters vector
@@ -604,6 +564,66 @@ class DoubleSphereCamera {
   int width_, height_; // for bound checking only
   int fov_deg_;
   Scalar r2_max_;
+
+  void updateR2max() {
+    // calculate r2_max
+
+    int width_backup = width_;
+    int height_backup = height_;
+
+    width_= 0;
+    height_ = 0;
+
+    // sweep through radial
+    int d = 0;
+    r2_max_ = Scalar(1e10); // put to max first
+    Scalar r2_max = Scalar(0);
+    for (; d <= fov_deg_ / 2; d++) {
+      // construct 3d point given the degree
+      Eigen::Matrix<Scalar, 3, 1> p3d;
+      p3d[0] = std::sin(Scalar(d) / Scalar(180 / M_PI));
+      p3d[1] = Scalar(0);
+      p3d[2] = std::cos(Scalar(d) / Scalar(180 / M_PI));
+
+      Vec2 p2d;
+
+      bool success = project(p3d, p2d);
+
+      if (!success)
+        break;
+
+      // update
+
+      const Scalar& fx = param_[0];
+      const Scalar& fy = param_[1];
+      const Scalar& cx = param_[2];
+      const Scalar& cy = param_[3];
+
+      const Scalar mx = (p2d[0] - cx) / fx;
+      const Scalar my = (p2d[1] - cy) / fy;
+
+      const Scalar r2 = mx * mx + my * my;
+
+      assert(r2 >= r2_max); // no wrapping around should happen
+
+      r2_max = r2;
+      // std::cout << r2_max << " ";
+    }
+    // std::cout << "r2_max" << std::endl;
+    assert(d > 0);
+    assert(r2_max > 0);
+
+    r2_max_ = r2_max;
+    fov_deg_ = std::min(fov_deg_, (d-1)*2);
+    width_ = width_backup;
+    height_ = height_backup;
+
+
+    const Scalar& alpha = param_[5];
+    if (alpha > Scalar(0.5)) {
+      r2_max_ = std::min(r2_max_, Scalar(1) / (Scalar(2) * alpha - Scalar(1)) - std::numeric_limits<Scalar>::epsilon());
+    }
+  }
 };
 
 }  // namespace basalt

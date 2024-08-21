@@ -62,6 +62,7 @@ class UnifiedCamera {
   using Vec4 = Eigen::Matrix<Scalar, 4, 1>;
 
   using VecN = Eigen::Matrix<Scalar, N, 1>;
+  using VecX = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
 
   using Mat24 = Eigen::Matrix<Scalar, 2, 4>;
   using Mat2N = Eigen::Matrix<Scalar, 2, N>;
@@ -358,12 +359,16 @@ class UnifiedCamera {
   /// \right]^T \f$
   ///
   /// @param[in] init vector [fx, fy, cx, cy]
-  inline void setFromInit(const Vec4& init) {
+  inline void setFromInit(const Vec4& init, const VecX* ks) {
     param_[0] = init[0];
     param_[1] = init[1];
     param_[2] = init[2];
     param_[3] = init[3];
-    param_[4] = 0.5;
+
+    if (!ks)
+      param_[4] = 0.5;
+    else
+      param_[4] = (*ks)(0);
   }
 
   inline void scaleParam(double scale) {

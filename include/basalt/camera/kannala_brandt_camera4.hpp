@@ -69,6 +69,7 @@ class KannalaBrandtCamera4 {
   using Vec4 = Eigen::Matrix<Scalar, 4, 1>;
 
   using VecN = Eigen::Matrix<Scalar, N, 1>;
+  using VecX = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
 
   using Mat24 = Eigen::Matrix<Scalar, 2, 4>;
   using Mat2N = Eigen::Matrix<Scalar, 2, N>;
@@ -77,42 +78,16 @@ class KannalaBrandtCamera4 {
   using Mat4N = Eigen::Matrix<Scalar, 4, N>;
 
   /// @brief Default constructor with zero intrinsics
-  KannalaBrandtCamera4() : width_(0), height_(0) { param_.setZero(); }
+  KannalaBrandtCamera4() : width_(0), height_(0), fov_deg_(220) { param_.setZero(); }
 
   /// @brief Construct camera model with given vector of intrinsics
   ///
   /// @param[in] p vector of intrinsic parameters [fx, fy, cx, cy, k1, k2, k3,
   /// k4]
-  explicit KannalaBrandtCamera4(const VecN& p, int fov = 200, int width = 0, int height = 0) : width_(0), height_(0) { 
-    param_ = p; 
-    fov_deg_ = fov;
+  explicit KannalaBrandtCamera4(const VecN& p, int fov = 220, int width = 0, int height = 0) 
+    : param_(p), fov_deg_(fov), width_(width), height_(height) { 
 
-    // calculate r_max
-    Eigen::Matrix<Scalar, 3, 1> p3d;
-    p3d[0] = std::sin(Scalar(fov_deg_/2) / Scalar(180 / M_PI));
-    p3d[1] = Scalar(0);
-    p3d[2] = std::cos(Scalar(fov_deg_/2) / Scalar(180 / M_PI));
-
-    Vec2 p2d;
-
-    bool success = project(p3d, p2d);
-    assert(success);
-
-    // initialise after the p2d, to skip image bound check
-    width_ = width;
-    height_ = height;
-
-    // update
-
-    const Scalar& fx = param_[0];
-    const Scalar& fy = param_[1];
-    const Scalar& cx = param_[2];
-    const Scalar& cy = param_[3];
-
-    const Scalar mx = (p2d[0] - cx) / fx;
-    const Scalar my = (p2d[1] - cy) / fy;
-
-    r2_max_ = mx * mx + my * my;
+    updateRmax();
 
   }
 
@@ -612,15 +587,22 @@ inline void makeInBound(Vec2& proj) const{
   /// \right]^T \f$
   ///
   /// @param[in] init vector [fx, fy, cx, cy]
-  inline void setFromInit(const Vec4& init) {
+  inline void setFromInit(const Vec4& init, const VecX* ks) {
     param_[0] = init[0];
     param_[1] = init[1];
     param_[2] = init[2];
     param_[3] = init[3];
-    param_[4] = 0;
-    param_[5] = 0;
-    param_[6] = 0;
-    param_[7] = 0;
+
+    if (!ks) {
+      // perfect fisheye
+      for (size_t j = 4; j < N; ++j)
+        param_[j] = 0;
+    }else {
+      for (size_t j = 4; j < N; ++j)
+        param_[j] = (*ks)(j - 4);
+    }
+
+    updateRmax();
   }
 
   inline void scaleParam(double scale) {
@@ -628,6 +610,8 @@ inline void makeInBound(Vec2& proj) const{
     param_[1] *= scale;
     param_[2] *= scale;
     param_[3] *= scale;
+
+    updateRmax();
   }
 
   /// @brief Projections used for unit-tests
@@ -648,6 +632,46 @@ inline void makeInBound(Vec2& proj) const{
   int width_, height_;
   int fov_deg_;
   Scalar r2_max_;
+
+  void updateRmax() {
+
+    int width_backup =  width_;
+    int height_backup = height_;
+
+    width_ = 0;
+    height_ = 0;
+
+    // calculate r_max
+    assert(fov_deg_ > 0);
+    Eigen::Matrix<Scalar, 3, 1> p3d;
+    p3d[0] = std::sin(Scalar(fov_deg_/2) / Scalar(180 / M_PI));
+    p3d[1] = Scalar(0);
+    p3d[2] = std::cos(Scalar(fov_deg_/2) / Scalar(180 / M_PI));
+
+    Vec2 p2d;
+
+    bool success = project(p3d, p2d);
+    assert(success);
+
+    // initialise after the p2d, to skip image bound check
+
+
+    // update
+
+    const Scalar& fx = param_[0];
+    const Scalar& fy = param_[1];
+    const Scalar& cx = param_[2];
+    const Scalar& cy = param_[3];
+
+    const Scalar mx = (p2d[0] - cx) / fx;
+    const Scalar my = (p2d[1] - cy) / fy;
+
+    r2_max_ = mx * mx + my * my;
+
+    width_ = width_backup;
+    height_ = height_backup;
+
+  }
 };
 
 }  // namespace basalt

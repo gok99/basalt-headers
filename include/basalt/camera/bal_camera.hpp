@@ -79,6 +79,7 @@ class BalCamera {
   using Vec4 = Eigen::Matrix<Scalar, 4, 1>;
 
   using VecN = Eigen::Matrix<Scalar, N, 1>;
+  using VecX = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
 
   using Mat2 = Eigen::Matrix<Scalar, 2, 2>;
   using Mat24 = Eigen::Matrix<Scalar, 2, 4>;
@@ -256,10 +257,18 @@ class BalCamera {
   /// Initializes the camera model to  \f$ \left[f_x, 0, 0 \right]^T \f$
   ///
   /// @param[in] init vector [fx, fy, cx, cy]
-  inline void setFromInit(const Vec4& init) {
+  inline void setFromInit(const Vec4& init, const VecX* ks) {
     param_[0] = init[0];
-    param_[1] = 0;
-    param_[2] = 0;
+
+    if (!ks)
+    {
+      param_[1] = 0;
+      param_[2] = 0;
+    }else {
+      param_[1] = (*ks)(0);
+      param_[2] = (*ks)(1);
+    }
+    
   }
 
   inline void scaleParam(double scale) {
