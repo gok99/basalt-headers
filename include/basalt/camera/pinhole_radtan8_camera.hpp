@@ -184,7 +184,8 @@ class PinholeRadtan8Camera {
     // rp2(u, v) = Squared norm in Z=1 of unprojected point uv
     auto rp2 = [this](Vec2 uv) {
       Vec3 xyz;
-      unproject(uv, xyz);
+      bool success = unproject(uv, xyz);
+      BASALT_ASSERT(success); // unprojection with rpmax == 0 should always succeed
       xyz /= xyz.z();  // To z=1
       return xyz.x() * xyz.x() + xyz.y() * xyz.y();
     };
@@ -528,12 +529,13 @@ inline bool inBound(const Vec2& proj) const{
 inline void makeInBound(Vec2& proj) const{
 
     Vec3 p3d;
-    unproject(proj, p3d);
+    bool success = unproject(proj, p3d);
+    BASALT_ASSERT(success);
 
     Scalar xp = p3d[0] / p3d[2];
     Scalar yp = p3d[1] / p3d[2];
 
-    Scalar scale = std::sqrt((xp*xp + yp*yp) / rpmax_ * rpmax_) - Sophus::Constants<Scalar>::epsilonSqrt();
+    Scalar scale = (rpmax_ == S0) ? Scalar(1) : std::sqrt((xp*xp + yp*yp) / (rpmax_ * rpmax_)) - Sophus::Constants<Scalar>::epsilonSqrt();
     BASALT_ASSERT(scale > 0);
 
     proj /= scale;
