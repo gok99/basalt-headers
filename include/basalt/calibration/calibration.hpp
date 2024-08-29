@@ -53,6 +53,7 @@ struct CalibrationStats {
   float mean_reprojection_error;
   float poses_rejection_ratio;
   int num_points;
+  std::map<size_t, int> num_points_map;
   std::vector<std::map<double, double>> calibrated_fov; // up to a certain reprojection error
   std::vector<std::vector<double>> calibrated_model_hfov;
   std::vector<std::vector<double>> calibrated_model_vfov;
