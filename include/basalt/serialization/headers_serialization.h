@@ -341,7 +341,8 @@ inline void serialize(Archive& ar, basalt::CalibrationStats& stats) {
      cereal::make_nvp("calibrated_fov", stats.calibrated_fov),
      cereal::make_nvp("calibrated_model_hfov", stats.calibrated_model_hfov),
      cereal::make_nvp("calibrated_model_vfov", stats.calibrated_model_vfov),
-     cereal::make_nvp("calibrated_model_dfov", stats.calibrated_model_dfov)
+     cereal::make_nvp("calibrated_model_dfov", stats.calibrated_model_dfov),
+     cereal::make_nvp("board_corners_z_span_count", stats.board_corners_z_span_count)
   );
 }
 

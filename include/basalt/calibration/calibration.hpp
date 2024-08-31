@@ -52,12 +52,16 @@ struct CalibrationStats {
   bool success; // checking reprojection error etc
   float mean_reprojection_error;
   float poses_rejection_ratio;
-  int num_points;
-  std::map<size_t, int> num_points_map;
+
+  int num_points; // total points from all cams
+  std::map<size_t, int> num_points_map; // indexed by cam id
+
   std::vector<std::map<double, double>> calibrated_fov; // up to a certain reprojection error
   std::vector<std::vector<double>> calibrated_model_hfov;
   std::vector<std::vector<double>> calibrated_model_vfov;
   std::vector<std::vector<double>> calibrated_model_dfov;
+
+  std::vector<std::map<double, int>> board_corners_z_span_count; // indexed by cam id, then thresholds. normalised to max z of that detection
 };
 
 template <class Scalar>
