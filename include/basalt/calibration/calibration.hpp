@@ -62,6 +62,8 @@ struct CalibrationStats {
   std::vector<std::vector<double>> calibrated_model_dfov;
 
   std::vector<std::map<double, int>> board_corners_z_span_count; // indexed by cam id, then thresholds. normalised to max z of that detection
+
+  std::map<double, std::map<std::string, Eigen::VectorXd>> opt_eigen_vectors_values; // only display the ones < 10 and the values of intrinsic part
 };
 
 template <class Scalar>
