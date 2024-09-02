@@ -336,6 +336,7 @@ inline void serialize(Archive& ar, basalt::CalibrationStats& stats) {
   ar(cereal::make_nvp("success", stats.success),
      cereal::make_nvp("mean_reprojection_error", stats.mean_reprojection_error),
      cereal::make_nvp("poses_rejection_ratio", stats.poses_rejection_ratio),
+     cereal::make_nvp("num_points_pre_filtering", stats.num_points_pre_filtering),
      cereal::make_nvp("num_points", stats.num_points),
      cereal::make_nvp("num_points_map", stats.num_points_map),
      cereal::make_nvp("calibrated_fov", stats.calibrated_fov),

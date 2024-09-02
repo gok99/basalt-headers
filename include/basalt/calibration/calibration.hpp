@@ -53,6 +53,7 @@ struct CalibrationStats {
   float mean_reprojection_error;
   float poses_rejection_ratio;
 
+  int num_points_pre_filtering; // all points from the dataset, that belongs to aprilgrid
   int num_points; // total points from all cams
   std::map<size_t, int> num_points_map; // indexed by cam id
 
