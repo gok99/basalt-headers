@@ -459,7 +459,11 @@ inline void makeInBound(Vec2& proj) const{
     is_valid = r2 <= r2_max_;
 
     if (thetad > Sophus::Constants<Scalar>::epsilonSqrt()) {
-      theta = solveTheta<3>(thetad, d_func_d_theta);
+
+      if (param_.template tail<4>().array().abs().maxCoeff() > Scalar(0.05))
+        theta = solveTheta<7>(thetad, d_func_d_theta); // not conforming kb4 r-theta, we need more iteration to converge
+      else
+        theta = solveTheta<4>(thetad, d_func_d_theta);
 
       sin_theta = sin(theta);
       cos_theta = cos(theta);
