@@ -350,7 +350,8 @@ inline void serialize(Archive& ar, basalt::CalibrationStats& stats) {
 
 template <class Archive, class Scalar>
 inline void serialize(Archive& ar, basalt::Calibration<Scalar>& cam) {
-  ar(cereal::make_nvp("calibration_stats", cam.calibration_stats),
+  ar(cereal::make_nvp("serial_number", cam.serial_number),
+     cereal::make_nvp("calibration_stats", cam.calibration_stats),
      cereal::make_nvp("cam_names", cam.cam_names),
      cereal::make_nvp("T_imu_body", cam.T_i_b),
      cereal::make_nvp("T_imu_cam", cam.T_i_c),

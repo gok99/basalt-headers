@@ -91,6 +91,8 @@ struct Calibration {
   Calibration<Scalar2> cast() const {
     Calibration<Scalar2> new_cam;
 
+    new_cam.serial_number = serial_number;
+
     for (const auto& v : T_i_c)
       new_cam.T_i_c.emplace_back(v.template cast<Scalar2>());
     for (const auto& v : intrinsics)
@@ -123,6 +125,8 @@ struct Calibration {
 
     return new_cam;
   }
+
+  std::string serial_number;
 
   CalibrationStats calibration_stats;
 
