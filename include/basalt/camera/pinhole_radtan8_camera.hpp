@@ -139,7 +139,7 @@ class PinholeRadtan8Camera {
     const Scalar STEP_SIZE{0.1};        // GA fixed "learning rate"
     const Scalar MIN_REL_STEP{0.0001};  // GA minimum step (relative) size
     const Scalar NUDGE{0.1};  // Image center offset for the GA first guess
-    const Scalar CORNER_BOUND_SCALE{1.5};  // Divergence bounds scaler
+    const Scalar CORNER_BOUND_SCALE{4.5};  // Divergence bounds scaler
     const Scalar RPMAX_SCALE{0.98};  // Shrink the resulting circle to be safe
 
     const Scalar& fx = param_[0];
