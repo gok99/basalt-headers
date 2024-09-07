@@ -363,6 +363,9 @@ class GenericCamera {
     constexpr size_t VARIANT_SIZE = std::variant_size<VariantT>::value;
     visitAllTypes<VARIANT_SIZE - 1>(res, name);
 
+    if(name != res.getName())
+      throw std::runtime_error("camera model does not exist: " + name);
+
     return res;
   }
 
