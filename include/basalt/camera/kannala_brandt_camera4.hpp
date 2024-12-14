@@ -85,7 +85,7 @@ class KannalaBrandtCamera4 {
   /// @param[in] p vector of intrinsic parameters [fx, fy, cx, cy, k1, k2, k3,
   /// k4]
   explicit KannalaBrandtCamera4(const VecN& p, int fov = 220, int width = 0, int height = 0) 
-    : param_(p), fov_deg_(fov), width_(width), height_(height) { 
+    : param_(p), width_(width), height_(height), fov_deg_(fov) {
 
     updateRmax();
 
@@ -654,8 +654,8 @@ inline void makeInBound(Vec2& proj) const{
 
     Vec2 p2d;
 
-    bool success = project(p3d, p2d);
-    assert(success);
+    // bool success = project(p3d, p2d);
+    assert(project(p3d, p2d));
 
     // initialise after the p2d, to skip image bound check
 

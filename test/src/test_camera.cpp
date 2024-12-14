@@ -340,6 +340,9 @@ TEST(CameraTestCase, KannalaBrandtProjectJacobiansFloat) {
 TEST(CameraTestCase, DoubleSphereJacobians) {
   testProjectJacobian<basalt::DoubleSphereCamera<double>>();
 }
+TEST(CameraTestCase, DoubleSphereSymforceJacobians) {
+testProjectJacobian<basalt::DoubleSphereCameraSymforce<double>>();
+}
 TEST(CameraTestCase, FovCameraJacobians) {
   testProjectJacobian<basalt::FovCamera<double>>();
 }
@@ -394,6 +397,12 @@ TEST(CameraTestCase, DoubleSphereProjectUnproject) {
 }
 TEST(CameraTestCase, DoubleSphereProjectUnprojectFloat) {
   testProjectUnproject<basalt::DoubleSphereCamera<float>>();
+}
+TEST(CameraTestCase, DoubleSphereSymforceProjectUnproject) {
+  testProjectUnproject<basalt::DoubleSphereCameraSymforce<double>>();
+}
+TEST(CameraTestCase, DoubleSphereSymforceProjectUnprojectFloat) {
+  testProjectUnproject<basalt::DoubleSphereCameraSymforce<float>>();
 }
 
 TEST(CameraTestCase, FovProjectUnproject) {
@@ -452,6 +461,9 @@ TEST(CameraTestCase, KannalaBrandtUnprojectJacobians) {
 TEST(CameraTestCase, DoubleSphereUnprojectJacobians) {
   testUnprojectJacobians<basalt::DoubleSphereCamera<double>>();
 }
+TEST(CameraTestCase, DoubleSphereSymforceUnprojectJacobians) {
+  testUnprojectJacobians<basalt::DoubleSphereCameraSymforce<double>>();
+}
 // TEST(CameraTestCase, DoubleSphereUnprojectJacobiansFloat) {
 //  test_unproject_jacobians<basalt::DoubleSphereCamera<float>>();
 //}
@@ -502,6 +514,9 @@ TEST(CameraTestCase, KannalaBrandtProjectJacobiansFloat3) {
 
 TEST(CameraTestCase, DoubleSphereJacobians3) {
   testProjectJacobian3<basalt::DoubleSphereCamera<double>>();
+}
+TEST(CameraTestCase, DoubleSphereSymforceJacobians3) {
+  testProjectJacobian3<basalt::DoubleSphereCameraSymforce<double>>();
 }
 TEST(CameraTestCase, FovCameraJacobians3) {
   testProjectJacobian3<basalt::FovCamera<double>>();
@@ -554,6 +569,9 @@ TEST(CameraTestCase, KannalaBrandtUnprojectJacobians3) {
 
 TEST(CameraTestCase, DoubleSphereUnprojectJacobians3) {
   testUnprojectJacobians3<basalt::DoubleSphereCamera<double>>();
+}
+TEST(CameraTestCase, DoubleSphereSymforceUnprojectJacobians3) {
+  testUnprojectJacobians3<basalt::DoubleSphereCameraSymforce<double>>();
 }
 // TEST(CameraTestCase, DoubleSphereUnprojectJacobiansFloat3) {
 //  test_unproject_jacobians3<basalt::DoubleSphereCamera<float>>();

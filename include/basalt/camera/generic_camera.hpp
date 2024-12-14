@@ -47,6 +47,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <basalt/camera/pinhole_camera.hpp>
 #include <basalt/camera/pinhole_radtan8_camera.hpp>
 #include <basalt/camera/unified_camera.hpp>
+#include <basalt/camera/double_sphere_camera_symforce.hpp>
+#include <basalt/camera/triple_sphere_camera_symforce.hpp>
 
 #include <variant>
 
@@ -76,7 +78,8 @@ class GenericCamera {
       std::variant<ExtendedUnifiedCamera<Scalar>, DoubleSphereCamera<Scalar>,
                    KannalaBrandtCamera4<Scalar>, KannalaBrandtCamera18<Scalar>,
                    UnifiedCamera<Scalar>, PinholeCamera<Scalar>,
-                   PinholeRadtan8Camera<Scalar>>;
+                   PinholeRadtan8Camera<Scalar>, DoubleSphereCameraSymforce<Scalar>,
+                   TripleSphereCameraSymforce<Scalar>>;
 
  public:
   /// @brief Cast to different scalar type

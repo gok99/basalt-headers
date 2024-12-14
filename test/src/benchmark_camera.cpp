@@ -127,6 +127,7 @@ BENCHMARK_TEMPLATE(bmProject, basalt::ExtendedUnifiedCamera<double>);
 BENCHMARK_TEMPLATE(bmProject, basalt::UnifiedCamera<double>);
 BENCHMARK_TEMPLATE(bmProject, basalt::KannalaBrandtCamera4<double>);
 BENCHMARK_TEMPLATE(bmProject, basalt::DoubleSphereCamera<double>);
+BENCHMARK_TEMPLATE(bmProject, basalt::DoubleSphereCameraSymforce<double>);
 BENCHMARK_TEMPLATE(bmProject, basalt::FovCamera<double>);
 
 BENCHMARK_TEMPLATE(bmProjectJacobians, basalt::PinholeCamera<double>);
@@ -135,6 +136,7 @@ BENCHMARK_TEMPLATE(bmProjectJacobians, basalt::ExtendedUnifiedCamera<double>);
 BENCHMARK_TEMPLATE(bmProjectJacobians, basalt::UnifiedCamera<double>);
 BENCHMARK_TEMPLATE(bmProjectJacobians, basalt::KannalaBrandtCamera4<double>);
 BENCHMARK_TEMPLATE(bmProjectJacobians, basalt::DoubleSphereCamera<double>);
+BENCHMARK_TEMPLATE(bmProjectJacobians, basalt::DoubleSphereCameraSymforce<double>);
 BENCHMARK_TEMPLATE(bmProjectJacobians, basalt::FovCamera<double>);
 
 BENCHMARK_TEMPLATE(bmUnproject, basalt::PinholeCamera<double>);
@@ -143,6 +145,7 @@ BENCHMARK_TEMPLATE(bmUnproject, basalt::ExtendedUnifiedCamera<double>);
 BENCHMARK_TEMPLATE(bmUnproject, basalt::UnifiedCamera<double>);
 BENCHMARK_TEMPLATE(bmUnproject, basalt::KannalaBrandtCamera4<double>);
 BENCHMARK_TEMPLATE(bmUnproject, basalt::DoubleSphereCamera<double>);
+BENCHMARK_TEMPLATE(bmUnproject, basalt::DoubleSphereCameraSymforce<double>);
 BENCHMARK_TEMPLATE(bmUnproject, basalt::FovCamera<double>);
 
 BENCHMARK_TEMPLATE(bmUnprojectJacobians, basalt::PinholeCamera<double>);
@@ -151,6 +154,7 @@ BENCHMARK_TEMPLATE(bmUnprojectJacobians, basalt::ExtendedUnifiedCamera<double>);
 BENCHMARK_TEMPLATE(bmUnprojectJacobians, basalt::UnifiedCamera<double>);
 BENCHMARK_TEMPLATE(bmUnprojectJacobians, basalt::KannalaBrandtCamera4<double>);
 BENCHMARK_TEMPLATE(bmUnprojectJacobians, basalt::DoubleSphereCamera<double>);
+BENCHMARK_TEMPLATE(bmUnprojectJacobians, basalt::DoubleSphereCameraSymforce<double>);
 BENCHMARK_TEMPLATE(bmUnprojectJacobians, basalt::FovCamera<double>);
 
 BENCHMARK_MAIN();

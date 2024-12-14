@@ -270,6 +270,50 @@ inline void load(Archive& ar, basalt::DoubleSphereCamera<Scalar>& cam) {
 }
 
 template <class Archive, class Scalar>
+inline void save(Archive& ar, const basalt::DoubleSphereCameraSymforce<Scalar>& cam) {
+  ar(cereal::make_nvp("fx", cam.getParam()[0]),
+     cereal::make_nvp("fy", cam.getParam()[1]),
+     cereal::make_nvp("cx", cam.getParam()[2]),
+     cereal::make_nvp("cy", cam.getParam()[3]),
+     cereal::make_nvp("xi", cam.getParam()[4]),
+     cereal::make_nvp("alpha", cam.getParam()[5]));
+}
+
+template <class Archive, class Scalar>
+inline void load(Archive& ar, basalt::DoubleSphereCameraSymforce<Scalar>& cam) {
+  Eigen::Matrix<Scalar, 6, 1> intr;
+
+  ar(cereal::make_nvp("fx", intr[0]), cereal::make_nvp("fy", intr[1]),
+     cereal::make_nvp("cx", intr[2]), cereal::make_nvp("cy", intr[3]),
+     cereal::make_nvp("xi", intr[4]), cereal::make_nvp("alpha", intr[5]));
+
+  cam = basalt::DoubleSphereCamera<Scalar>(intr);
+}
+
+template <class Archive, class Scalar>
+inline void save(Archive& ar, const basalt::TripleSphereCameraSymforce<Scalar>& cam) {
+  ar(cereal::make_nvp("fx", cam.getParam()[0]),
+     cereal::make_nvp("fy", cam.getParam()[1]),
+     cereal::make_nvp("cx", cam.getParam()[2]),
+     cereal::make_nvp("cy", cam.getParam()[3]),
+     cereal::make_nvp("xi", cam.getParam()[4]),
+     cereal::make_nvp("lambda", cam.getParam()[5]),
+     cereal::make_nvp("alpha", cam.getParam()[6]));
+}
+
+template <class Archive, class Scalar>
+inline void load(Archive& ar, basalt::TripleSphereCameraSymforce<Scalar>& cam) {
+  Eigen::Matrix<Scalar, 6, 1> intr;
+
+  ar(cereal::make_nvp("fx", intr[0]), cereal::make_nvp("fy", intr[1]),
+     cereal::make_nvp("cx", intr[2]), cereal::make_nvp("cy", intr[3]),
+     cereal::make_nvp("xi", intr[4]), cereal::make_nvp("lambda", intr[5]),
+     cereal::make_nvp("alpha", intr[6]));
+
+  cam = basalt::DoubleSphereCamera<Scalar>(intr);
+}
+
+template <class Archive, class Scalar>
 inline void save(Archive& ar, const basalt::FovCamera<Scalar>& cam) {
   ar(cereal::make_nvp("fx", cam.getParam()[0]),
      cereal::make_nvp("fy", cam.getParam()[1]),
