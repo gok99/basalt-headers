@@ -245,166 +245,158 @@ class TripleSphereCameraSymforce {
     // Input arrays
 
     // Intermediate terms (127)
-    const Scalar _tmp0 = std::pow(param_(0, 0), Scalar(-2));
-    const Scalar _tmp1 = -param_(2, 0) + proj(0, 0);
-    const Scalar _tmp2 = std::pow(_tmp1, Scalar(2));
-    const Scalar _tmp3 = std::pow(param_(1, 0), Scalar(-2));
-    const Scalar _tmp4 = -param_(3, 0) + proj(1, 0);
-    const Scalar _tmp5 = std::pow(_tmp4, Scalar(2));
-    const Scalar _tmp6 = _tmp0 * _tmp2 + _tmp3 * _tmp5;
-    const Scalar _tmp7 = std::min<Scalar>(
+    const Scalar _tmp0 = -param_(2, 0) + proj(0, 0);
+    const Scalar _tmp1 = Scalar(1.0) / (param_(0, 0));
+    const Scalar _tmp2 = std::min<Scalar>(
             0, (((param_(6, 0) + Scalar(-0.5)) > 0) - ((param_(6, 0) + Scalar(-0.5)) < 0)));
-    const Scalar _tmp8 = 2 * _tmp7;
-    const Scalar _tmp9 = epsilon * (_tmp8 + 1) + param_(6, 0);
-    const Scalar _tmp10 = _tmp7 + _tmp9;
-    const Scalar _tmp11 = std::pow(_tmp10, Scalar(-2));
-    const Scalar _tmp12 = (Scalar(1) / Scalar(2)) * _tmp8 - _tmp9 + 1;
+    const Scalar _tmp3 = 2 * _tmp2;
+    const Scalar _tmp4 = epsilon * (_tmp3 + 1) + param_(6, 0);
+    const Scalar _tmp5 = _tmp2 + _tmp4;
+    const Scalar _tmp6 = Scalar(1.0) / (_tmp5);
+    const Scalar _tmp7 = (Scalar(1) / Scalar(2)) * _tmp3 - _tmp4 + 1;
+    const Scalar _tmp8 = _tmp6 * _tmp7;
+    const Scalar _tmp9 = std::pow(param_(0, 0), Scalar(-2));
+    const Scalar _tmp10 = std::pow(_tmp0, Scalar(2));
+    const Scalar _tmp11 = std::pow(param_(1, 0), Scalar(-2));
+    const Scalar _tmp12 = -param_(3, 0) + proj(1, 0);
     const Scalar _tmp13 = std::pow(_tmp12, Scalar(2));
-    const Scalar _tmp14 = -_tmp11 * _tmp13 + 1;
-    const Scalar _tmp15 = std::sqrt(Scalar(_tmp14 * _tmp6 + 1));
-    const Scalar _tmp16 = _tmp15 + param_(4, 0);
-    const Scalar _tmp17 = Scalar(1.0) / (param_(0, 0));
-    const Scalar _tmp18 = _tmp6 + 1;
-    const Scalar _tmp19 = Scalar(1.0) / (_tmp18);
-    const Scalar _tmp20 = _tmp16 * _tmp19;
-    const Scalar _tmp21 = Scalar(1.0) / (_tmp10);
-    const Scalar _tmp22 = -_tmp12 * _tmp21 + _tmp20;
-    const Scalar _tmp23 = std::pow(param_(5, 0), Scalar(2));
-    const Scalar _tmp24 = std::pow(_tmp22, Scalar(2));
-    const Scalar _tmp25 = std::sqrt(Scalar(_tmp23 * _tmp24 - _tmp23 + 1));
-    const Scalar _tmp26 = _tmp22 * param_(5, 0) + _tmp25;
-    const Scalar _tmp27 = _tmp22 * _tmp26 - param_(5, 0);
+    const Scalar _tmp14 = _tmp10 * _tmp9 + _tmp11 * _tmp13;
+    const Scalar _tmp15 = _tmp14 + 1;
+    const Scalar _tmp16 = Scalar(1.0) / (_tmp15);
+    const Scalar _tmp17 = std::pow(_tmp5, Scalar(-2));
+    const Scalar _tmp18 = std::pow(_tmp7, Scalar(2));
+    const Scalar _tmp19 = -_tmp17 * _tmp18 + 1;
+    const Scalar _tmp20 = std::sqrt(Scalar(_tmp14 * _tmp19 + 1));
+    const Scalar _tmp21 = _tmp20 + _tmp8;
+    const Scalar _tmp22 = _tmp16 * _tmp21;
+    const Scalar _tmp23 = _tmp22 - _tmp8;
+    const Scalar _tmp24 = std::pow(param_(5, 0), Scalar(2));
+    const Scalar _tmp25 = std::pow(_tmp23, Scalar(2));
+    const Scalar _tmp26 = std::sqrt(Scalar(_tmp24 * _tmp25 - _tmp24 + 1));
+    const Scalar _tmp27 = _tmp23 * param_(5, 0) + _tmp26;
     const Scalar _tmp28 = std::pow(param_(4, 0), Scalar(2));
-    const Scalar _tmp29 = std::pow(_tmp27, Scalar(2));
-    const Scalar _tmp30 = std::sqrt(Scalar(_tmp28 * _tmp29 - _tmp28 + 1));
-    const Scalar _tmp31 = _tmp27 * param_(4, 0) + _tmp30;
-    const Scalar _tmp32 = _tmp19 * _tmp26;
-    const Scalar _tmp33 = _tmp31 * _tmp32;
-    const Scalar _tmp34 = _tmp17 * _tmp33;
+    const Scalar _tmp29 = _tmp23 * _tmp27 - param_(5, 0);
+    const Scalar _tmp30 = std::pow(_tmp29, Scalar(2));
+    const Scalar _tmp31 = std::sqrt(Scalar(_tmp28 * _tmp30 - _tmp28 + 1));
+    const Scalar _tmp32 = _tmp29 * param_(4, 0) + _tmp31;
+    const Scalar _tmp33 = _tmp22 * _tmp32;
+    const Scalar _tmp34 = _tmp27 * _tmp33;
     const Scalar _tmp35 = _tmp1 * _tmp34;
     const Scalar _tmp36 = Scalar(1.0) / (param_(1, 0));
-    const Scalar _tmp37 = _tmp33 * _tmp36;
-    const Scalar _tmp38 = _tmp16 * _tmp37;
-    const Scalar _tmp39 = _tmp2 / [&]() {
+    const Scalar _tmp37 = _tmp34 * _tmp36;
+    const Scalar _tmp38 = _tmp10 / [&]() {
         const Scalar base = param_(0, 0);
         return base * base * base;
     }();
-    const Scalar _tmp40 = Scalar(1.0) / (_tmp15);
-    const Scalar _tmp41 = _tmp14 * _tmp40;
-    const Scalar _tmp42 = _tmp33 * _tmp41;
-    const Scalar _tmp43 = _tmp39 * _tmp42;
-    const Scalar _tmp44 = _tmp0 * _tmp1;
-    const Scalar _tmp45 = 2 * _tmp16 / std::pow(_tmp18, Scalar(2));
+    const Scalar _tmp39 = Scalar(1.0) / (_tmp20);
+    const Scalar _tmp40 = _tmp16 * _tmp19 * _tmp39;
+    const Scalar _tmp41 = _tmp38 * _tmp40;
+    const Scalar _tmp42 = _tmp27 * _tmp32;
+    const Scalar _tmp43 = _tmp41 * _tmp42;
+    const Scalar _tmp44 = _tmp0 * _tmp9;
+    const Scalar _tmp45 = 2 * _tmp21 / std::pow(_tmp15, Scalar(2));
     const Scalar _tmp46 = _tmp44 * _tmp45;
-    const Scalar _tmp47 = _tmp19 * _tmp40;
-    const Scalar _tmp48 = _tmp14 * _tmp47;
-    const Scalar _tmp49 = _tmp44 * _tmp48;
-    const Scalar _tmp50 = -_tmp46 + _tmp49;
-    const Scalar _tmp51 = Scalar(1.0) / (_tmp25);
-    const Scalar _tmp52 = _tmp22 * _tmp23 * _tmp51;
-    const Scalar _tmp53 = _tmp50 * _tmp52 + _tmp50 * param_(5, 0);
-    const Scalar _tmp54 = _tmp20 * _tmp31;
-    const Scalar _tmp55 = _tmp1 * _tmp17;
-    const Scalar _tmp56 = _tmp54 * _tmp55;
-    const Scalar _tmp57 = _tmp39 * _tmp45;
-    const Scalar _tmp58 = _tmp26 * _tmp31;
-    const Scalar _tmp59 = _tmp57 * _tmp58;
-    const Scalar _tmp60 = _tmp16 * _tmp34;
-    const Scalar _tmp61 = _tmp22 * _tmp53 + _tmp26 * _tmp50;
-    const Scalar _tmp62 = Scalar(1.0) / (_tmp30);
-    const Scalar _tmp63 = _tmp27 * _tmp28;
-    const Scalar _tmp64 = _tmp62 * _tmp63;
-    const Scalar _tmp65 = _tmp61 * _tmp64 + _tmp61 * param_(4, 0);
-    const Scalar _tmp66 = _tmp16 * _tmp32;
-    const Scalar _tmp67 = _tmp55 * _tmp66;
-    const Scalar _tmp68 = _tmp36 * _tmp4;
-    const Scalar _tmp69 = _tmp54 * _tmp68;
-    const Scalar _tmp70 = _tmp37 * _tmp4;
-    const Scalar _tmp71 = _tmp41 * _tmp70;
-    const Scalar _tmp72 = _tmp44 * _tmp71;
-    const Scalar _tmp73 = _tmp46 * _tmp58 * _tmp68;
-    const Scalar _tmp74 = _tmp66 * _tmp68;
-    const Scalar _tmp75 = _tmp3 * _tmp4;
-    const Scalar _tmp76 = _tmp35 * _tmp41;
-    const Scalar _tmp77 = _tmp75 * _tmp76;
-    const Scalar _tmp78 = _tmp45 * _tmp75;
-    const Scalar _tmp79 = _tmp55 * _tmp58 * _tmp78;
-    const Scalar _tmp80 = _tmp48 * _tmp75;
-    const Scalar _tmp81 = -_tmp78 + _tmp80;
-    const Scalar _tmp82 = _tmp52 * _tmp81 + _tmp81 * param_(5, 0);
-    const Scalar _tmp83 = _tmp22 * _tmp82 + _tmp26 * _tmp81;
-    const Scalar _tmp84 = _tmp64 * _tmp83 + _tmp83 * param_(4, 0);
-    const Scalar _tmp85 = _tmp5 / [&]() {
+    const Scalar _tmp47 = _tmp40 * _tmp44;
+    const Scalar _tmp48 = -_tmp46 + _tmp47;
+    const Scalar _tmp49 = Scalar(1.0) / (_tmp26);
+    const Scalar _tmp50 = _tmp23 * _tmp24 * _tmp49;
+    const Scalar _tmp51 = _tmp48 * _tmp50 + _tmp48 * param_(5, 0);
+    const Scalar _tmp52 = _tmp23 * _tmp51 + _tmp27 * _tmp48;
+    const Scalar _tmp53 = Scalar(1.0) / (_tmp31);
+    const Scalar _tmp54 = _tmp28 * _tmp29 * _tmp53;
+    const Scalar _tmp55 = _tmp52 * _tmp54 + _tmp52 * param_(4, 0);
+    const Scalar _tmp56 = _tmp0 * _tmp1;
+    const Scalar _tmp57 = _tmp22 * _tmp27;
+    const Scalar _tmp58 = _tmp56 * _tmp57;
+    const Scalar _tmp59 = _tmp33 * _tmp51;
+    const Scalar _tmp60 = _tmp38 * _tmp45;
+    const Scalar _tmp61 = _tmp42 * _tmp60;
+    const Scalar _tmp62 = _tmp12 * _tmp36;
+    const Scalar _tmp63 = _tmp42 * _tmp62;
+    const Scalar _tmp64 = _tmp47 * _tmp63;
+    const Scalar _tmp65 = _tmp57 * _tmp62;
+    const Scalar _tmp66 = _tmp46 * _tmp63;
+    const Scalar _tmp67 = _tmp11 * _tmp12;
+    const Scalar _tmp68 = _tmp40 * _tmp67;
+    const Scalar _tmp69 = _tmp42 * _tmp56;
+    const Scalar _tmp70 = _tmp68 * _tmp69;
+    const Scalar _tmp71 = _tmp45 * _tmp67;
+    const Scalar _tmp72 = _tmp68 - _tmp71;
+    const Scalar _tmp73 = _tmp50 * _tmp72 + _tmp72 * param_(5, 0);
+    const Scalar _tmp74 = _tmp23 * _tmp73 + _tmp27 * _tmp72;
+    const Scalar _tmp75 = _tmp54 * _tmp74 + _tmp74 * param_(4, 0);
+    const Scalar _tmp76 = _tmp33 * _tmp56;
+    const Scalar _tmp77 = _tmp69 * _tmp71;
+    const Scalar _tmp78 = _tmp13 / [&]() {
         const Scalar base = param_(1, 0);
         return base * base * base;
     }();
-    const Scalar _tmp86 = _tmp42 * _tmp85;
-    const Scalar _tmp87 = _tmp45 * _tmp85;
-    const Scalar _tmp88 = _tmp58 * _tmp87;
-    const Scalar _tmp89 = [&]() {
-        const Scalar base = _tmp1;
+    const Scalar _tmp79 = _tmp40 * _tmp78;
+    const Scalar _tmp80 = _tmp42 * _tmp79;
+    const Scalar _tmp81 = _tmp33 * _tmp62;
+    const Scalar _tmp82 = _tmp45 * _tmp78;
+    const Scalar _tmp83 = _tmp42 * _tmp82;
+    const Scalar _tmp84 = -_tmp41 + _tmp60;
+    const Scalar _tmp85 = _tmp50 * _tmp84 + _tmp84 * param_(5, 0);
+    const Scalar _tmp86 = [&]() {
+        const Scalar base = _tmp0;
         return base * base * base;
     }() / std::pow(param_(0, 0), Scalar(4));
-    const Scalar _tmp90 = -_tmp39 * _tmp48 + _tmp57;
-    const Scalar _tmp91 = _tmp52 * _tmp90 + _tmp90 * param_(5, 0);
-    const Scalar _tmp92 = _tmp54 * _tmp91;
-    const Scalar _tmp93 = _tmp45 * _tmp58;
-    const Scalar _tmp94 = _tmp16 * _tmp33;
-    const Scalar _tmp95 = _tmp22 * _tmp91 + _tmp26 * _tmp90;
-    const Scalar _tmp96 = _tmp64 * _tmp95 + _tmp95 * param_(4, 0);
-    const Scalar _tmp97 = -_tmp48 * _tmp85 + _tmp87;
-    const Scalar _tmp98 = _tmp52 * _tmp97 + _tmp97 * param_(5, 0);
-    const Scalar _tmp99 = _tmp22 * _tmp98 + _tmp26 * _tmp97;
-    const Scalar _tmp100 = _tmp64 * _tmp99 + _tmp99 * param_(4, 0);
-    const Scalar _tmp101 = [&]() {
-        const Scalar base = _tmp4;
+    const Scalar _tmp87 = _tmp40 * _tmp42;
+    const Scalar _tmp88 = _tmp23 * _tmp85 + _tmp27 * _tmp84;
+    const Scalar _tmp89 = _tmp54 * _tmp88 + _tmp88 * param_(4, 0);
+    const Scalar _tmp90 = _tmp42 * _tmp45;
+    const Scalar _tmp91 = -_tmp79 + _tmp82;
+    const Scalar _tmp92 = _tmp50 * _tmp91 + _tmp91 * param_(5, 0);
+    const Scalar _tmp93 = _tmp23 * _tmp92 + _tmp27 * _tmp91;
+    const Scalar _tmp94 = _tmp54 * _tmp93 + _tmp93 * param_(4, 0);
+    const Scalar _tmp95 = [&]() {
+        const Scalar base = _tmp12;
         return base * base * base;
     }() / std::pow(param_(1, 0), Scalar(4));
-    const Scalar _tmp102 = _tmp46 - _tmp49;
-    const Scalar _tmp103 = _tmp102 * _tmp52 + _tmp102 * param_(5, 0);
-    const Scalar _tmp104 = _tmp103 * _tmp54;
-    const Scalar _tmp105 = _tmp102 * _tmp26 + _tmp103 * _tmp22;
-    const Scalar _tmp106 = _tmp105 * _tmp64 + _tmp105 * param_(4, 0);
-    const Scalar _tmp107 = _tmp106 * _tmp66;
-    const Scalar _tmp108 = _tmp78 - _tmp80;
-    const Scalar _tmp109 = _tmp108 * _tmp52 + _tmp108 * param_(5, 0);
-    const Scalar _tmp110 = _tmp108 * _tmp26 + _tmp109 * _tmp22;
-    const Scalar _tmp111 = _tmp110 * _tmp64 + _tmp110 * param_(4, 0);
-    const Scalar _tmp112 = _tmp19 * _tmp52 + _tmp19 * param_(5, 0);
-    const Scalar _tmp113 = _tmp112 * _tmp22 + _tmp32;
-    const Scalar _tmp114 = 2 * param_(4, 0);
-    const Scalar _tmp115 =
-            _tmp113 * param_(4, 0) + _tmp27 +
-            (Scalar(1) / Scalar(2)) * _tmp62 * (2 * _tmp113 * _tmp63 + _tmp114 * _tmp29 - _tmp114);
-    const Scalar _tmp116 = 2 * param_(5, 0);
-    const Scalar _tmp117 = _tmp22 + (Scalar(1) / Scalar(2)) * _tmp51 * (_tmp116 * _tmp24 - _tmp116);
-    const Scalar _tmp118 = _tmp117 * _tmp22 - 1;
-    const Scalar _tmp119 = _tmp118 * _tmp64 + _tmp118 * param_(4, 0);
-    const Scalar _tmp120 = _tmp11 * _tmp12;
-    const Scalar _tmp121 = (Scalar(1) / Scalar(2)) * _tmp6 * (2 * _tmp120 + 2 * _tmp13 / [&]() {
-        const Scalar base = _tmp10;
-        return base * base * base;
-    }());
-    const Scalar _tmp122 = _tmp121 * _tmp40;
-    const Scalar _tmp123 = _tmp120 + _tmp121 * _tmp47 + _tmp21;
-    const Scalar _tmp124 = _tmp123 * _tmp52 + _tmp123 * param_(5, 0);
-    const Scalar _tmp125 = _tmp123 * _tmp26 + _tmp124 * _tmp22;
-    const Scalar _tmp126 = _tmp125 * _tmp64 + _tmp125 * param_(4, 0);
+    const Scalar _tmp96 = _tmp46 - _tmp47;
+    const Scalar _tmp97 = _tmp50 * _tmp96 + _tmp96 * param_(5, 0);
+    const Scalar _tmp98 = _tmp23 * _tmp97 + _tmp27 * _tmp96;
+    const Scalar _tmp99 = _tmp54 * _tmp98 + _tmp98 * param_(4, 0);
+    const Scalar _tmp100 = -_tmp68 + _tmp71;
+    const Scalar _tmp101 = _tmp100 * _tmp50 + _tmp100 * param_(5, 0);
+    const Scalar _tmp102 = _tmp100 * _tmp27 + _tmp101 * _tmp23;
+    const Scalar _tmp103 = _tmp102 * _tmp54 + _tmp102 * param_(4, 0);
+    const Scalar _tmp104 = 2 * param_(4, 0);
+    const Scalar _tmp105 = _tmp29 + (Scalar(1) / Scalar(2)) * _tmp53 * (_tmp104 * _tmp30 - _tmp104);
+    const Scalar _tmp106 = 2 * param_(5, 0);
+    const Scalar _tmp107 = _tmp23 + (Scalar(1) / Scalar(2)) * _tmp49 * (_tmp106 * _tmp25 - _tmp106);
+    const Scalar _tmp108 = _tmp107 * _tmp23 - 1;
+    const Scalar _tmp109 = _tmp108 * _tmp54 + _tmp108 * param_(4, 0);
+    const Scalar _tmp110 = _tmp17 * _tmp7;
+    const Scalar _tmp111 = _tmp16 * (-_tmp110 +
+                                     (Scalar(1) / Scalar(2)) * _tmp14 * _tmp39 *
+                                     (2 * _tmp110 + 2 * _tmp18 /
+                                                    [&]() {
+                                                        const Scalar base = _tmp5;
+                                                        return base * base * base;
+                                                    }()) -
+                                     _tmp6);
+    const Scalar _tmp112 = _tmp111 * _tmp42;
+    const Scalar _tmp113 = _tmp110 + _tmp111 + _tmp6;
+    const Scalar _tmp114 = _tmp113 * _tmp50 + _tmp113 * param_(5, 0);
+    const Scalar _tmp115 = _tmp113 * _tmp27 + _tmp114 * _tmp23;
+    const Scalar _tmp116 = _tmp115 * _tmp54 + _tmp115 * param_(4, 0);
 
     // Output terms (3)
-    p3d(0, 0) = _tmp16 * _tmp35;
-    p3d(1, 0) = _tmp38 * _tmp4;
-    p3d(2, 0) = _tmp27 * _tmp31 - param_(4, 0);
+    p3d(0, 0) = _tmp0 * _tmp35;
+    p3d(1, 0) = _tmp12 * _tmp37;
+    p3d(2, 0) = _tmp29 * _tmp32 - param_(4, 0);
 
     if constexpr (!std::is_same_v<DerivedJ2D, std::nullptr_t>) {
       BASALT_ASSERT(res_D_proj);
 
-      (*res_D_proj)(0, 0) = _tmp43 + _tmp53 * _tmp56 - _tmp59 + _tmp60 + _tmp65 * _tmp67;
-      (*res_D_proj)(1, 0) = _tmp53 * _tmp69 + _tmp65 * _tmp74 + _tmp72 - _tmp73;
-      (*res_D_proj)(2, 0) = _tmp27 * _tmp65 + _tmp31 * _tmp61;
-      (*res_D_proj)(0, 1) = _tmp56 * _tmp82 + _tmp67 * _tmp84 + _tmp77 - _tmp79;
-      (*res_D_proj)(1, 1) = _tmp38 + _tmp69 * _tmp82 + _tmp74 * _tmp84 + _tmp86 - _tmp88;
-      (*res_D_proj)(2, 1) = _tmp27 * _tmp84 + _tmp31 * _tmp83;
+      (*res_D_proj)(0, 0) = _tmp35 + _tmp43 + _tmp55 * _tmp58 + _tmp56 * _tmp59 - _tmp61;
+      (*res_D_proj)(1, 0) = _tmp55 * _tmp65 + _tmp59 * _tmp62 + _tmp64 - _tmp66;
+      (*res_D_proj)(2, 0) = _tmp29 * _tmp55 + _tmp32 * _tmp52;
+      (*res_D_proj)(0, 1) = _tmp58 * _tmp75 + _tmp70 + _tmp73 * _tmp76 - _tmp77;
+      (*res_D_proj)(1, 1) = _tmp37 + _tmp65 * _tmp75 + _tmp73 * _tmp81 + _tmp80 - _tmp83;
+      (*res_D_proj)(2, 1) = _tmp29 * _tmp75 + _tmp32 * _tmp74;
 
       if (!(*res_D_proj).array().isFinite().all())
         return false;
@@ -416,28 +408,28 @@ class TripleSphereCameraSymforce {
       BASALT_ASSERT(res_D_param);
 
       (*res_D_param)(0, 0) =
-              -_tmp42 * _tmp89 - _tmp44 * _tmp94 + _tmp55 * _tmp92 + _tmp67 * _tmp96 + _tmp89 * _tmp93;
-      (*res_D_param)(1, 0) = -_tmp39 * _tmp71 + _tmp59 * _tmp68 + _tmp68 * _tmp92 + _tmp74 * _tmp96;
-      (*res_D_param)(2, 0) = _tmp27 * _tmp96 + _tmp31 * _tmp95;
-      (*res_D_param)(0, 1) = _tmp100 * _tmp67 + _tmp55 * _tmp88 + _tmp56 * _tmp98 - _tmp76 * _tmp85;
+              -_tmp34 * _tmp44 + _tmp58 * _tmp89 + _tmp76 * _tmp85 - _tmp86 * _tmp87 + _tmp86 * _tmp90;
+      (*res_D_param)(1, 0) = -_tmp43 * _tmp62 + _tmp61 * _tmp62 + _tmp65 * _tmp89 + _tmp81 * _tmp85;
+      (*res_D_param)(2, 0) = _tmp29 * _tmp89 + _tmp32 * _tmp88;
+      (*res_D_param)(0, 1) = -_tmp56 * _tmp80 + _tmp56 * _tmp83 + _tmp58 * _tmp94 + _tmp76 * _tmp92;
       (*res_D_param)(1, 1) =
-              _tmp100 * _tmp74 - _tmp101 * _tmp42 + _tmp101 * _tmp93 + _tmp69 * _tmp98 - _tmp75 * _tmp94;
-      (*res_D_param)(2, 1) = _tmp100 * _tmp27 + _tmp31 * _tmp99;
-      (*res_D_param)(0, 2) = _tmp104 * _tmp55 + _tmp107 * _tmp55 - _tmp43 + _tmp59 - _tmp60;
-      (*res_D_param)(1, 2) = _tmp104 * _tmp68 + _tmp107 * _tmp68 - _tmp72 + _tmp73;
-      (*res_D_param)(2, 2) = _tmp105 * _tmp31 + _tmp106 * _tmp27;
-      (*res_D_param)(0, 3) = _tmp109 * _tmp56 + _tmp111 * _tmp67 - _tmp77 + _tmp79;
-      (*res_D_param)(1, 3) = _tmp109 * _tmp69 + _tmp111 * _tmp74 - _tmp38 - _tmp86 + _tmp88;
-      (*res_D_param)(2, 3) = _tmp110 * _tmp31 + _tmp111 * _tmp27;
-      (*res_D_param)(0, 4) = _tmp112 * _tmp56 + _tmp115 * _tmp67 + _tmp35;
-      (*res_D_param)(1, 4) = _tmp112 * _tmp69 + _tmp115 * _tmp74 + _tmp70;
-      (*res_D_param)(2, 4) = _tmp113 * _tmp31 + _tmp115 * _tmp27 - 1;
-      (*res_D_param)(0, 5) = _tmp117 * _tmp56 + _tmp119 * _tmp67;
-      (*res_D_param)(1, 5) = _tmp117 * _tmp69 + _tmp119 * _tmp74;
-      (*res_D_param)(2, 5) = _tmp118 * _tmp31 + _tmp119 * _tmp27;
-      (*res_D_param)(0, 6) = _tmp122 * _tmp35 + _tmp124 * _tmp56 + _tmp126 * _tmp67;
-      (*res_D_param)(1, 6) = _tmp122 * _tmp70 + _tmp124 * _tmp69 + _tmp126 * _tmp74;
-      (*res_D_param)(2, 6) = _tmp125 * _tmp31 + _tmp126 * _tmp27;
+              -_tmp34 * _tmp67 + _tmp65 * _tmp94 + _tmp81 * _tmp92 - _tmp87 * _tmp95 + _tmp90 * _tmp95;
+      (*res_D_param)(2, 1) = _tmp29 * _tmp94 + _tmp32 * _tmp93;
+      (*res_D_param)(0, 2) = -_tmp35 - _tmp43 + _tmp58 * _tmp99 + _tmp61 + _tmp76 * _tmp97;
+      (*res_D_param)(1, 2) = -_tmp64 + _tmp65 * _tmp99 + _tmp66 + _tmp81 * _tmp97;
+      (*res_D_param)(2, 2) = _tmp29 * _tmp99 + _tmp32 * _tmp98;
+      (*res_D_param)(0, 3) = _tmp101 * _tmp76 + _tmp103 * _tmp58 - _tmp70 + _tmp77;
+      (*res_D_param)(1, 3) = _tmp101 * _tmp81 + _tmp103 * _tmp65 - _tmp37 - _tmp80 + _tmp83;
+      (*res_D_param)(2, 3) = _tmp102 * _tmp32 + _tmp103 * _tmp29;
+      (*res_D_param)(0, 4) = _tmp105 * _tmp58;
+      (*res_D_param)(1, 4) = _tmp105 * _tmp65;
+      (*res_D_param)(2, 4) = _tmp105 * _tmp29 - 1;
+      (*res_D_param)(0, 5) = _tmp107 * _tmp76 + _tmp109 * _tmp58;
+      (*res_D_param)(1, 5) = _tmp107 * _tmp81 + _tmp109 * _tmp65;
+      (*res_D_param)(2, 5) = _tmp108 * _tmp32 + _tmp109 * _tmp29;
+      (*res_D_param)(0, 6) = _tmp112 * _tmp56 + _tmp114 * _tmp76 + _tmp116 * _tmp58;
+      (*res_D_param)(1, 6) = _tmp112 * _tmp62 + _tmp114 * _tmp81 + _tmp116 * _tmp65;
+      (*res_D_param)(2, 6) = _tmp115 * _tmp32 + _tmp116 * _tmp29;
 
       if (!(*res_D_param).array().isFinite().all())
         return false;
